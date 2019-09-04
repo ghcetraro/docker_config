@@ -1,0 +1,7 @@
+https://software.opensuse.org/download.html?project=Virtualization%3Acontainers&package=docker
+
+sudo zypper addrepo https://download.opensuse.org/repositories/Virtualization:containers/openSUSE_Leap_15.0/Virtualization:containers.repo
+
+sudo zypper dist-upgrade
+sudo zypper update
+sudo zypper install docker

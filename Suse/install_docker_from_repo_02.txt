@@ -1,0 +1,827 @@
+Docker Open Source Engine Guide
+
+This guide introduces Docker Open Source Engine, a lightweight virtualization solution to run virtual units simultaneously on a single control host.
+Publication Date: May 29, 2019
+
+1 Docker Open Source Engine Overview
+
+    1.1 Docker Open Source Engine Architecture
+    1.2 Docker Open Source Engine Drivers
+
+2 Docker Open Source Engine Installation
+
+    2.1 General Preparation
+    2.2 Networking
+
+3 Installing sle2docker
+4 Storing Images
+
+    4.1 What is a Docker Registry?
+    4.2 Installing and Setting Up Docker Registry
+    4.3 Limitations
+    4.4 Portus
+
+5 Creating Custom Images
+
+    5.1 Obtaining Base SLES Images
+    5.2 Customizing SLES Docker Images
+
+6 Creating Docker Images of Applications
+
+    6.1 Running an Application with Specific Package Versions
+    6.2 Running Applications with Specific Configuration
+    6.3 Sharing Data between an Application and the Host System
+    6.4 Applications Running in the Background
+
+7 Working with Containers
+
+    7.1 Linking Containers
+
+A Documentation Updates
+
+    A.1 February 2019 (Documentation Maintenance Update for SUSE Linux Enterprise Server 12 SP4)
+    A.2 October 2018 (Documentation Maintenance Update for SUSE Linux Enterprise Server 12 SP3)
+    A.3 September 2017 (Initial Release of SUSE Linux Enterprise Server 12 SP3)
+    A.4 November 2016 (Initial Release of SUSE Linux Enterprise Server 12 SP2)
+
+B GNU Licenses
+
+    B.1 GNU Free Documentation License
+
+List of Figures
+
+1.1 The Docker Open Source Engine architecture
+
+List of Examples
+
+6.1 Dockerfile for an Apache2 Web Server
+
+Copyright © 2006– 2019 SUSE LLC and contributors. All rights reserved.
+
+Permission is granted to copy, distribute and/or modify this document under the terms of the GNU Free Documentation License, Version 1.2 or (at your option) version 1.3; with the Invariant Section being this copyright notice and license. A copy of the license version 1.2 is included in the section entitled “GNU Free Documentation License”.
+
+For SUSE trademarks, see http://www.suse.com/company/legal/. All other third-party trademarks are the property of their respective owners. Trademark symbols (®, ™ etc.) denote trademarks of SUSE and its affiliates. Asterisks (*) denote third-party trademarks.
+
+All information found in this book has been compiled with utmost attention to detail. However, this does not guarantee complete accuracy. Neither SUSE LLC, its affiliates, the authors nor the translators shall be held liable for possible errors or the consequences thereof.
+1 Docker Open Source Engine Overview
+Report Bug
+#
+
+1.1 Docker Open Source Engine Architecture
+1.2 Docker Open Source Engine Drivers
+
+Docker Open Source Engine is a lightweight virtualization solution to run multiple virtual units (containers) simultaneously on a single control host. Containers are isolated with Kernel Control Groups ( Control groups ) and Namespace .
+
+Full virtualization solutions such as Xen, KVM, or libvirt are based on the processor simulating a complete hardware environment and controlling the virtual machines. However, Docker Open Source Engine only provides operating system-level virtualization where the Linux kernel controls isolated containers.
+
+Before going into detail about Docker Open Source Engine, let's define some of the terms used:
+
+Docker Open Source Engine
+
+    Docker Open Source Engine is a server-client type application that performs all tasks related to virtual machines. Docker Open Source Engine comprises the following:
+
+        daemon - is the server side of Docker Open Source Engine that manages all Docker objects (images, containers, network used by containers, etc.)
+
+        REST API - applications can use this API to communicate directly with the daemon
+
+        a CLI client - that enables you to communicate with the daemon. If the daemon is running on a different machine than the CLI client, the CLI client can communicate by using network sockets or the REST API provided by Docker Open Source Engine. 
+
+Image
+
+    An image is a read-only template used to create a virtual machine on the host server. A Docker image is made by a series of layers built one over the other. Each layer corresponds to a permanent change, for example an update of an application. The changes are stored in a file called a Dockerfile. For more details see the official Docker documentation. 
+Dockerfile
+
+    A Dockerfile stores changes made on top of the base image. The Docker Open Source Engine reads instructions in the Dockerfile and builds a new image according to the instructions. 
+Container
+
+    A container is a running instance based on a particular Docker Image. Each container can be distinguished by a unique container ID. 
+Registry
+
+    A registry is storage for already created images. It typically contains several repositories There are two types of registry:
+
+        public registry - where everyone (usually registered) can download and use images. A typical public registry is Docker Hub.
+
+        private registry - these are accessible for particular users or from a particular private network. 
+
+Repository
+
+    A repository is storage in a registry that stores a different version of a particular image. You can pull or push images from or to a repository. 
+Control groups
+
+    Control groups, also called cgroups, is a Linux kernel feature that allows aggregating or partitioning tasks (processes) and all their children into hierarchically organized groups to isolate resources. 
+Namespace
+
+    Docker Open Source Engine uses namespaces for its containers that isolates resources reserved for particular containers. 
+Orchestration
+
+    In a production environment you typically need a cluster with many containers on each cluster node. The containers must cooperate and you need a framework that enables you to manage the containers automatically. The act of automatic container management is called container orchestration and is typically handled by Kubernetes. 
+
+Docker Open Source Engine is a platform that allows developers and system administrators to manage the complete life cycle of images. Docker Open Source Engine makes it easy to build, ship and run images containing applications.
+
+Docker Open Source Engine provides you with the following advantages:
+
+    Isolation of applications and operating systems through containers.
+
+    Near native performance, as Docker Open Source Engine manages allocation of resources in real time.
+
+    Controls network interfaces and resources available inside containers through cgroups.
+
+    Versioning of images.
+
+    Allows building new images based on existing ones.
+
+    Provides you with container orchestration. 
+
+On the other hand, Docker Open Source Engine has the following limitations:
+Limitations of Docker Open Source Engine
+Report Bug
+#
+
+    Containers run inside the host system's kernel and cannot use a different kernel.
+
+    Only allows Linux guest operating systems.
+
+    Docker Open Source Engine is not a full virtualization stack like Xen, KVM, or libvirt.
+
+    Security depends on the host system. Refer to the official security documentation for more details. 
+
+1.1 Docker Open Source Engine Architecture
+Report Bug
+#
+
+Docker Open Source Engine uses a client/server architecture. You can use the CLI client to communicate with the daemon. The daemon then performs operations with containers and manages images locally or in registry. The CLI client can run on the same server as the host daemon or on a different machine. The CLI client communicates with the daemon by using network sockets. The architecture is depicted in Figure 1.1, “The Docker Open Source Engine architecture”.
+The Docker Open Source Engine architecture
+Figure 1.1: The Docker Open Source Engine architecture
+Report Bug
+#
+1.2 Docker Open Source Engine Drivers
+Report Bug
+#
+1.2.1 Container Drivers
+Report Bug
+#
+
+Docker Open Source Engine uses libcontainer as the back-end driver to handle containers.
+1.2.2 Storage Drivers
+Report Bug
+#
+
+Docker Open Source Engine supports different storage drivers:
+
+    vfs: this driver is automatically used when the Docker host file system does not support copy-on-write. This is a simple driver which does not offer some advantages of Docker Open Source Engine (like sharing layers, more on that in the next sections). It is highly reliable but also slow.
+
+    devicemapper: this driver relies on the device-mapper thin provisioning module. It supports copy-on-write, hence it offers all the advantages of Docker Open Source Engine.
+
+    btrfs: this driver relies on Btrfs to provide all the features required by Docker Open Source Engine. To use this driver the /var/lib/docker directory must be on a Btrfs file system.
+
+    AUFS: this driver relies on the AUFS union file system. Neither the upstream kernel nor the SUSE one supports this file system. Hence the AUFS driver is not built into the SUSE docker package. 
+
+SLE 12 uses the Btrfs file system by default, which leads Docker Open Source Engine to use the btrfs driver.
+
+It is possible to specify which driver to use by changing the value of the DOCKER_OPTS variable defined inside of the /etc/sysconfig/docker file. This can be done either manually or using YaST by browsing to System › /etc/sysconfig Editor › System › Management › DOCKER_OPTS menu and entering the -s storage_driver string.
+
+For example, to force the usage of the devicemapper driver enter the following text:
+
+DOCKER_OPTS="-s devicemapper"
+
+ImportantImportant: Mounting /var/lib/docker
+
+It is recommended to have /var/lib/docker mounted on a separate partition or volume to not affect the Docker Open Source Engine host operating system in case of a file system corruption.
+
+In case you choose the Btrfs file system for /var/lib/docker, it is strongly recommended to create a subvolume for it. This ensures that the directory is excluded from file system snapshots. If not excluding /var/lib/docker from snapshots, the file system will likely run out of disk space soon after you start deploying containers. What's more, a rollback to a previous snapshot will also reset the Docker Open Source Engine database and images. Refer to Creating and Mounting New Subvolumes at https://www.suse.com/documentation/sles-12/book_sle_admin/data/sec_snapper_setup.html for details.
+2 Docker Open Source Engine Installation
+Report Bug
+#
+
+2.1 General Preparation
+2.2 Networking
+
+2.1 General Preparation
+Report Bug
+#
+
+Prepare the host as described below. Before installing any Docker-related packages, you need to enable the container module:
+NoteNote: Built-in Docker Orchestration Support
+
+Starting with Docker Open Source Engine 1.12, the container orchestration is now an integral part of the Docker Open Source Engine. Even though this feature is available in SLESSP1 and in SLESSP2, it is not supported and is only a technical preview. Use Kubernetes for Docker container orchestration, for details refer to the Kubernetes documentation.
+Procedure 2.1: Enabling the Container Module Using YaST
+Report Bug
+#
+
+    Start YaST, and select Software ›  Software Repositories.
+
+    Click Add to open the add-on dialog.
+
+    Select Extensions and Modules from Registration Server and click Next.
+
+    From the list of available extensions and modules, select Container Module 12 x86_64 and click Next.
+
+    The containers module and its repositories will be added to your system.
+
+    If you use Subscription Management Tool, update the list of repositories on the SMT server. 
+
+Procedure 2.2: Enabling the Container Module Using SUSEConnect
+Report Bug
+#
+
+    The Container Module can be added also with the following command:
+
+    $ sudo SUSEConnect -p sle-module-containers/12/x86_64 -r ''
+
+    NoteNote: Note about the SUSEConnect syntax
+
+    The -r '' flag is required to avoid a known limitation of SUSEConnect. 
+
+Procedure 2.3: Installing and Setting Up Docker Open Source Engine
+Report Bug
+#
+
+    Install the docker package:
+
+    sudo zypper install docker
+
+    To automatically start the Docker service at boot time:
+
+    sudo systemctl enable docker.service
+
+    This will automatically enable docker.socket in consequence.
+
+    In case you will use Portus and an SSL secured registry, open the /etc/sysconfig/docker file. Search for the parameter DOCKER_OPTS and add --insecure-registry ADDRESS_OF_YOUR_REGISTRY.
+
+    In the production environment when using the SSL secured registry with Portus, add CA certificates to the directory /etc/docker/certs.d/<registry address> and copy the CA certificates to your system:
+
+        sudo cp CA /etc/pki/trust/anchors/ && update-ca-certificates
+
+    Start the Docker service:
+
+    sudo systemctl start docker.service
+
+    This will automatically start docker.socket in consequence. 
+
+The Docker daemon listens on a local socket which is accessible only by the root user and by the members of the docker group. The docker group is automatically created at package installation time. To allow a certain user to connect to the local Docker daemon, use the following command:
+
+sudo /usr/sbin/usermod -aG docker USERNAME
+
+The user can communicate with the local Docker daemon upon his next login.
+2.2 Networking
+Report Bug
+#
+
+If you want your containers to be able to access the external network, you must enable the ipv4 ip_forward rule. This can be done using YaST by browsing to System › Network Settings › Routing menu and ensuring Enable IPv4 Forwarding is checked.
+
+This option cannot be changed when networking is handled by the Network Manager. In such cases the /etc/sysconfig/SuSEfirewall2 file needs to be edited manually to ensure the FW_ROUTE flag is set to yes:
+
+FW_ROUTE="yes"
+
+2.2.1 Networking Limitations on Power Architecture
+Report Bug
+#
+
+Currently Docker networking has two limitations on the POWER architecture.
+
+The first limitation is about iptables. SLE 12 machines cannot run Docker Open Source Engine with the iptables support enabled. An update of the kernel is going to solve this issue. In the meantime the docker package for POWER has iptables support disabled via a dedicated directive inside of /etc/sysconfig/docker.
+
+As a result of this limitation Docker containers will not have access to the outer network. A possible workaround is to share the same network namespace between the host and the containers. This however reduces the isolation of the containers.
+
+The network namespace of the host can be shared on a per-container basis by adding --net=host to the docker run command.
+NoteNote: iptables support on SLE 12 SP1
+
+SLE 12 SP1 hosts are not affected by this limitation but, given they use the same SLE 12 package, they will have iptables support disabled. This can be changed by removing the -iptables=false setting inside of /etc/sysconfig/docker.
+
+The second limitation is about network isolation between the containers and the host. Currently it is not possible to prevent containers from probing or accessing arbitrary ports of each other.
+3 Installing sle2docker
+Report Bug
+#
+
+The sle2docker is used to import pre-built SUSE Linux Enterprise images. The imported pre-built images can then be used to create base Docker images.
+
+The tool is part of the official container module. You can install it by using zypper. But prior to installing sle2docker, verify that the following prerequisites are fulfilled:
+
+    Ruby is installed on the host machine.
+
+    The docker daemon is running on the system.
+
+    The user invoking sle2docker must have proper rights to invoke Docker commands. 
+
+If the conditions above are fulfilled, you can install the sle2docker tool by running:
+
+sudo zypper in sle2docker
+
+4 Storing Images
+Report Bug
+#
+
+4.1 What is a Docker Registry?
+4.2 Installing and Setting Up Docker Registry
+4.3 Limitations
+4.4 Portus
+
+Prior to creating your own images, you should decide where you will store the images. The easiest solution would be to push these images to the Docker Hub. By default all images pushed to the Docker Hub are public. This is probably fine as long as this does not violate your company's policy and your images do not contain sensitive data or proprietary software.
+
+If you need to restrict access to your Docker images, there are two options:
+
+    Get a subscription on Docker Hub that unlocks the feature to create private repositories.
+
+    Run an on-site Docker Registry where to store all the Docker images used by your organization or company and combine them with Portus to secure the registry. 
+
+This chapter describes how to set up an on-site Docker Registry and how to combine it with Portus.
+4.1 What is a Docker Registry?
+Report Bug
+#
+
+The Docker Registry is an open source project created by Docker Inc. It allows the storage and retrieval of Docker images. By running a local instance of the Docker Registry it is possible to completely avoid usage of the Docker Hub.
+
+The Docker Registry is also used by the Docker Hub. However, the Docker Hub, as seen from the user perspective, is made of the following parts at least:
+
+    The user interface (UI): The part that is accessed by users with their browser. The UI provides a nice and intuitive way to browse the contents of the Docker Hub either manually or by using a search feature. It also allows to create organizations made by different users.
+
+    This component is closed source.
+
+    The authentication component: This is used to protect the images stored inside of the Docker Hub. It validates all push, pull and search requests.
+
+    This component is closed source.
+
+    The storage back-end: This is where the Docker images are sent and downloaded from. It is provided by the Docker Registry.
+
+    This component is open source. 
+
+4.2 Installing and Setting Up Docker Registry
+Report Bug
+#
+
+    Install the docker-distribution-registry package:
+
+    sudo zypper install docker-distribution-registry
+
+    To automatically start the Docker Registry at boot time:
+
+    sudo systemctl enable registry
+
+    Start the Docker Registry:
+
+    sudo systemctl start registry
+
+The Docker Registry configuration is defined inside of /etc/registry/config.yml.
+
+With the default configuration the registry listens on ports 5000 and stores the Docker images under /var/lib/docker-registry.
+NoteNote: Incompatible Versions of Docker Open Source Engine and Docker Registry
+
+Docker Registry version 2.3 is not compatible with Docker Registry versions older than 1.10, because v2 manifests were only introduced with Docker Open Source Engine 1.10. As Docker Open Source Engine and Docker Registry can be installed on different boxes, the versions might be incompatible. If you experience communication errors between between Docker Open Source Engine and Docker Registry, update both to the latest versions.
+
+For more details about Docker Registry and its configuration, see the official documentation at: https://docs.docker.com/registry/.
+4.3 Limitations
+Report Bug
+#
+
+The Docker Registry has two major limitations:
+
+    It lacks any form of authentication. That means everybody with access to the Docker Registry can push and pull images to it. That also includes the possibility to overwrite already existing images.
+
+    There is no way to see which images have been pushed to the Docker Registry. You can manually take notes of what is being stored inside of it. There is also no search functionality, which makes collaboration harder. 
+
+The next section is going to introduce Portus, the solution to all of the problems above.
+4.4 Portus
+Report Bug
+#
+
+Portus is an authentication service and user interface for the Docker Registry. It is an open source project created by SUSE to address all the limitations faced by the local instances of Docker Registry. By combining Portus and Docker Registry, it is possible to have a secure and enterprise ready on-premise version of the Docker Hub.
+
+Portus is available for SLES customers as a Docker image from SUSE Container Registry. For example, to pull the 2.4.0 tag, run the following command:
+
+docker pull registry.suse.com/sles12/portus:2.4.0
+
+In addition to the official version of the Portus image from SUSE Container Registry, there is a community version that can be found on Docker Hub. However, as a SLES customer, we strongly suggest you use the official Portus image instead. The Portus image for SLES customers has the same code as the one from the community. Therefore, the setup instructions from http://port.us.org/docs/deploy.html apply for both images.
+
+Portus was previously also available as an RPM package. To migrate from the RPM package to the Docker image, follow the instructions at http://port.us.org/docs/migrate-from-rpm.html.
+5 Creating Custom Images
+Report Bug
+#
+
+5.1 Obtaining Base SLES Images
+5.2 Customizing SLES Docker Images
+
+For creating your custom image you need a base Docker image of SLES. You can use any of the pre-built SLES images that you can obtain as described in Section 5.2, “Customizing SLES Docker Images”.
+NoteNote: No SLES Images in Docker Hub
+
+Usually you can pull a variety of base Docker images from the docker hub but that does not apply for SLES. Currently we cannot distribute SLES images for Docker Open Source Engine because there is no way to associate an End-User License Agreement (EULA) to a Docker image. sle2docker enables you to import pre-built SLES images that you can use for creating base SLES images.
+
+After you obtain your base docker image, you can modify the image by using a Dockerfile (usually placed in the build directory). Then use the standard building tool to create your custom image:
+
+docker build PATH_TO_BUILD_DIRECTORY
+
+For more docker build options, refer to the official Docker documentation.
+NoteNote: Dockerizing Your Applications
+
+You may want to write a dockerfile for your own application that should be run inside a docker container. For a procedure refer to Chapter 6, Creating Docker Images of Applications.
+5.1 Obtaining Base SLES Images
+Report Bug
+#
+
+How to obtain a pre-built base image depends on the SUSE Linux Enterprise Server version:
+
+Up to SLES 12 SP2
+
+    sudo zypper in sles11sp4-docker-image
+
+SLES 12 SP3 and better
+
+    docker pull registry.suse.com/suse/sles12sp4
+
+Pre-built images do not have repositories configured. But when the Docker host has an SLE subscription that provides access to the product used in the image, Zypper will automatically have access to the right repositories.
+
+If you have obtained the image with Zypper, you need to activate it. Proceed as follows:
+Procedure 5.1: Activating the Base Image for up to SLES 12 SP2
+Report Bug
+#
+
+    Get the proper image name with sle2docker by running
+
+    sle2docker list
+
+    Activate the image by using the image name from the previous step:
+
+    sle2docker activate PRE-BUILT_IMAGE_NAME
+
+    Check if the image was successfully activated by running
+
+    sle2docker
+
+You can customize the docker image as described in Section 5.2, “Customizing SLES Docker Images”.
+5.2 Customizing SLES Docker Images
+Report Bug
+#
+
+The pre-built images do not have any repository configured and do not include any modules or extensions. They contain a zypper service that contacts either the SUSE Customer Center (SCC) or your Subscription Management Tool (SMT) server, according to the configuration of the SLE host that runs the Docker container. The service obtains the list of repositories available for the product used by the Docker image. You can also directly declare extensions in your Dockerfile (for details refer to Section 5.2.3, “Adding SLE Extensions and Modules to Images”.
+
+You do not need to add any credentials to the Docker image because the machine credentials are automatically injected into the container by the Docker daemon. They are injected inside of the /run/secrets directory. The same applies to the /etc/SUSEConnect file of the host system, which is automatically injected into the /run/secrets directory.
+NoteNote: Credentials and Security
+
+The contents of the /run/secrets directory are never committed to a Docker image, hence there is no risk of your credentials leaking.
+
+To obtain the list of repositories use the following command:
+
+zypper ref -s
+
+It will automatically add all the repositories to your container. For each repository added to the system a new file will be created under /etc/zypp/repos.d. The URLs of these repositories include an access token that automatically expires after 12 hours. To renew the token call the zypper ref -s command. It is secure to commit these files to a Docker image.
+
+If you want to use a different set of credentials, place a custom /etc/zypp/credentials.d/SCCcredentials file inside of the Docker image. It contains the machine credentials that have the subscription you want to use. The same applies to the SUSEConnect file: to override the file available on the host system that is running the Docker container, add a custom /etc/SUSEConnect file inside of the Docker image.
+
+Now you can create a custom Docker image by using a Dockerfile. If you want to create a custom image, refer to
+
+    Section 5.2.1, “Creating a Custom SLE 11 SP4 Image” for SLE 11 SP4
+
+    Section 5.2.2, “Creating a Custom SLE 12 Image” for SLE 12 
+
+In case you would like to move your application to a Docker container, refer to Chapter 6, Creating Docker Images of Applications.
+5.2.1 Creating a Custom SLE 11 SP4 Image
+Report Bug
+#
+
+The following Dockerfile creates a simple Docker image based on SLE 11 SP4:
+
+FROM suse/sles11sp4:latest
+
+RUN zypper ref -s
+RUN zypper -n in vim
+
+When the Docker host machine is registered against an internal SMT server, the Docker image requires the SSL certificate used by SMT:
+
+FROM suse/sles11sp4:latest
+
+# Import the crt file of our private SMT server
+ADD http://smt.test.lan/smt.crt /etc/ssl/certs/smt.pem
+RUN c_rehash /etc/ssl/certs
+
+RUN zypper ref -s
+RUN zypper -n in vim
+
+5.2.2 Creating a Custom SLE 12 Image
+Report Bug
+#
+
+The following Dockerfile creates a simple Docker image based on SLE 12 SP4:
+
+FROM registry.suse.com/suse/sles12sp4:latest
+
+RUN zypper ref -s
+RUN zypper -n in vim
+
+When the Docker host machine is registered against an internal SMT server, the Docker image requires the SSL certificate used by SMT:
+
+FROM registry.suse.com/suse/sles12sp4:latest
+
+# Import the crt file of our private SMT server
+ADD http://smt.test.lan/smt.crt /etc/pki/trust/anchors/smt.crt
+RUN update-ca-certificates
+
+RUN zypper ref -s
+RUN zypper -n in vim
+
+5.2.3 Adding SLE Extensions and Modules to Images
+Report Bug
+#
+
+You may have subscriptions to SLE extensions or modules that you would like to use in your custom image. To add them to the Docker image, proceed as follows:
+Procedure 5.2: Adding Extension and Modules
+Report Bug
+#
+
+    Add the following into your Dockerfile:
+
+    ADD *.repo /etc/zypp/repos.d/
+    ADD *.service /etc/zypp/services.d
+    RUN zypper refs && zypper refresh
+
+    Copy all .service and .repo files that you will use into the directory where you will build the Docker image from the Dockerfile. 
+
+6 Creating Docker Images of Applications
+Report Bug
+#
+
+6.1 Running an Application with Specific Package Versions
+6.2 Running Applications with Specific Configuration
+6.3 Sharing Data between an Application and the Host System
+6.4 Applications Running in the Background
+
+Docker Open Source Engine is a technology that can help you to minimize resources used to run or build your applications. There are several types of applications that are suitable to run inside a Docker container like daemons, Web pages or applications that expose ports for communication. You can use Docker Open Source Engine to automate building and deployment processes by adding the build process into a Docker image, then building the image and then running containers based on that image.
+
+Running your application inside a Docker container provides you with the following advantages:
+
+    You can minimize the runtime environment of the application as you can add to the Docker image of the application just the required processes and applications.
+
+    The image with your application is portable across machines also with different Linux host systems.
+
+    You can share the image of your application by using a repository.
+
+    You can use different versions of required packages in the container than the host system uses without having problems with dependencies.
+
+    You can run several instances of the same application that are completely independent from each other. 
+
+Using Docker Open Source Engine for building of applications provides the following features:
+
+    You can prepare a complete building image.
+
+    Your build always runs in the same environment.
+
+    Your developers can test their code in the same environment as used in production.
+
+    You can set up an automated building process. 
+
+The following section provides you with examples and tips on how to create Docker images of your applications. Prior to reading further, make sure that you have activated your SLES base Docker image as described in Section 5.1, “Obtaining Base SLES Images”.
+6.1 Running an Application with Specific Package Versions
+Report Bug
+#
+
+You may face a problem that your application uses a specific version of a package that is different from the package installed on the system that should run your application. You can modify your application to work with another version or you may create a Docker image with that particular package version. The following example of a Dockerfile shows an image based on a current version of SLES but with an older version of the example package
+
+FROM registry.suse.com/suse/sles12sp4:latest
+MAINTAINER Tux
+
+RUN zypper ref && zypper in -f example-1.0.0-0
+COPY application.rpm /tmp/
+
+RUN zypper --non-interactive in /tmp/application.rpm
+
+ENTRYPOINT ["/etc/bin/application"]
+
+CMD ["-i"]
+
+Now you can build the image by running in the same directory as the Dockerfile resides:
+
+docker build --tag tux_application:latest .
+
+The Dockerfile example shown above performs the following operations during the docker build:
+
+    Updates the SLES repositories.
+
+    Installs the desired version of the example package.
+
+    Copies your application package to the image. The source RPM must be placed in the build context.
+
+    Unpacks your application.
+
+    The last two steps run your application after a container is started. 
+
+After a successful build of the tux_application image, you can start a container based on your new image:
+
+docker run -it --name application_instance tux_application:latest
+
+You have created a container that runs a single instance of your application. Bear in mind that after closing the application, the Docker container exits as well.
+6.2 Running Applications with Specific Configuration
+Report Bug
+#
+
+You may need to run an application that is delivered in a standard package accessible through SLES repositories but you may need to use a different configuration or use specific environment variables. In case you would like to run several instances of the application with non-standard configuration, you can create your own image that will pass the custom configuration to the application.
+
+An example with the example application follows:
+
+FROM registry.suse.com/suse/sles12sp4:latest
+
+RUN zypper ref && zypper --non-interactive in example
+
+ENV BACKUP=/backup
+
+RUN mkdir -p $BACKUP
+COPY configuration_example /etc/example/
+
+ENTRYPOINT ["/etc/bin/example"]
+
+The above example Dockerfile results in the following operations:
+
+    Refreshing of repositories and installation of the example.
+
+    Sets a BACKUP environment variable (the variable persists to containers started from the image). You can always overwrite the value of the variable with a new one while running the container by specifying a new value.
+
+    Creates the directory /backup.
+
+    Copies the configuration_example to the image.
+
+    Runs the example application. 
+
+Now you can build the image and after a successful build, you can run a container based on your image.
+6.3 Sharing Data between an Application and the Host System
+Report Bug
+#
+
+You may run an application that needs to share data between the application's container and the host file system. Docker Open Source Engine enables you to do data sharing by using volumes. You can declare a mount point directly in the Dockerfile. But you cannot specify a directory on the host system in the Dockerfile as the directory may not be accessible at the build time. You can find the mounted directory in the /var/lib/docker/volumes/ directory on the host system.
+NoteNote: Discarding Changes to the Directory to Be Shared
+
+After you declare a mount point by using the VOLUME instruction, all your changes performed (by using the RUN instruction) to the directory will be discarded. After the declaration, the volume is part of a temporary container that is then removed after a successful build. In case you need to e.g. change permissions, perform the change before you declare the directory as a mount point in the Dockerfile.
+
+You can specify a particular mount point on the host system when running a container by using the -v option:
+
+docker run -it --name testing -v /home/tux/data:/data sles12sp4:latest /bin/bash
+
+NoteNote
+
+Using the -v option overwrites the VOLUME instruction if you specify the same mount point in the container.
+
+Now let's create an example image with a Web server that will read Web content from the host's file system. The Dockerfile could look as follows:
+
+FROM registry.suse.com/suse/sles12sp4:latest
+
+RUN zypper ref && zypper --non-interactive in apache2
+
+COPY apache2 /etc/sysconfig/
+
+RUN chown -R admin /data
+
+EXPOSE 80
+
+VOLUME /data
+
+ENTRYPOINT ["apache2ctl"]
+
+The example above installs the Apache Web server to the image and copies all your configuration to the image. The data directory will be owned by the admin user and will be used as a mount point to store your web pages.
+6.4 Applications Running in the Background
+Report Bug
+#
+
+Your application may need to run in the background as a daemon or as an application exposing ports for communication. In that case a typical Docker Open Source Engine container may be run in background. An example Dockerfile for an Apache2 server exposing a port looks as follows:
+Example 6.1: Dockerfile for an Apache2 Web Server
+Report Bug
+#
+
+FROM registry.suse.com/suse/sles12sp4:latest 
+
+
+MAINTAINER tux 
+
+
+RUN zypper ref -s && zypper --non-interactive in apache2
+
+RUN echo "The Web Server is running" > /srv/www/htdocs/test.html 
+
+
+# COPY data/* /srv/www/htdocs/ 
+
+
+
+EXPOSE 80 
+
+
+
+ENTRYPOINT ["/usr/sbin/httpd"]
+CMD ["-D", "FOREGROUND"]
+
+1
+	
+
+Base image, taken from Section 5.1, “Obtaining Base SLES Images”.
+
+2
+	
+
+Optional maintainer of the image.
+
+3
+	
+
+The test line for debugging purposes; can be removed if everything works as expected.
+
+4
+	
+
+The copy instruction to copy your own data to the server's directory. Currently, this line is disabled due to the hash mark in the first column.
+
+5
+	
+
+The exposed port for the Apache Web server.
+NoteNote: Check for Running Apache2 Instances on Your Host
+
+Make sure that you do not have any Apache2 server instances running on your host. The Docker container would not serve any data if you have a host Apache2 server running. Remove or stop any Apache2 servers on your host.
+
+To use the container, proceed as follows:
+Procedure 6.1: Testing the Apache2 Web Server
+Report Bug
+#
+
+    Prepare for the build process:
+
+        Make sure you have installed the SUSE Linux Enterprise images as described in Section 5.1, “Obtaining Base SLES Images”.
+
+        Save the Dockerfile from Example 6.1, “Dockerfile for an Apache2 Web Server” to a directory docker.
+
+        Create your HTML files inside docker/data. Anything you put in this directory is copied to the Docker image and as such exposed on your Web server. 
+
+    Build the container. Set a tag for your image with the -t option (here tux/apache2, but you can use any name you want):
+
+    sudo docker build -t tux/apache2 .
+
+    Docker Open Source Engine refreshes repositories and installs the Apache2 server as it is not installed by default in the SLES Docker image.
+
+    Run the image in “detached” mode:
+
+    docker run --detach --interactive --tty tux/apache2
+
+    Docker Open Source Engine responds with the container ID, for example:
+
+    7bd674eb196d330d50f8a3cfc2bc61a243a4a535390767250b11a7886134ab93
+
+    Open a Web browser and enter in the text field http://localhost:80/test.html. You should see the output The Web Server is running. 
+
+With the last procedure, you have built an image which was used to test the build process and the Apache2 Web server. If everything was successful, use the following steps to serve your data through the Apache2 Web server:
+Procedure 6.2: Creating a Docker Container with your Own Data
+Report Bug
+#
+
+    Stop and remove the previous container with:
+
+    docker ps --latest
+    CONTAINER ID        IMAGE               COMMAND                  [...]
+    afee0124a0c7        tux/apache2         "/usr/sbin/httpd -..."   [...]
+    docker rm --force afee0124a0c7
+
+    Remove or disable the echo line 3 in Example 6.1, “Dockerfile for an Apache2 Web Server” and remove the hash character in the first column of the copy line 4.
+
+    Rebuild the image as described in Step 2 of Procedure 6.1.
+
+    Run the image in “detached” mode:
+
+    docker run --detach --interactive --tty tux/apache2
+
+    Docker Open Source Engine responds with the container ID, for example:
+
+    e43fff4ae9832ecdb7677c058a73039d7610c32145a1d9b6ad0a4ed52b5c4dc7
+
+You can now access your data at http://localhost:80. If you do not want to copy your data into the Docker container, share a specific directory on your host. Refer to https://docs.docker.com/storage/volumes/ for more information.
+7 Working with Containers
+Report Bug
+#
+
+7.1 Linking Containers
+
+After you have created your images, you can start your containers based on that image. You can run an instance of the image by using the docker run command. The Docker Open Source Engine then creates and starts the container. The command docker run takes several arguments:
+
+    A container name - it is recommended to name your container.
+
+    Specify a user to use in your container.
+
+    Define a mount point.
+
+    Specify a particular host name, etc. 
+
+The container typically exits if its main process finishes. For example, if your container starts a particular application, as soon as you quit the application, the container exits. You can start the container again by running:
+
+docker start -ai <container name>
+
+You may need to remove unused containers, you can achieve this by using:
+
+docker rm <container name>
+
+7.1 Linking Containers
+Report Bug
+#
+
+Docker Open Source Engine enables you to link containers together which allows for communication between containers on the same host server. If you use the standard networking model, you can link containers by using the --link option when running containers:
+
+First create a container to link to:
+
+docker run -d --name sles sles12sp4 /bin/bash
+
+Then create a container that will link to the sles container:
+
+docker run --link sles:sles sles12sp4 /bin/bash
+
+The container that links to sles has defined environment variables that enable connecting to the linked container. 

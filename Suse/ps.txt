@@ -1,0 +1,4 @@
+root      4773  0.4  0.9 1240184 71632 ?       Ssl  19:15   0:00 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+root      5045  0.0  0.0 378868  3312 ?        Sl   19:15   0:00 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9000 -container-ip 172.17.0.2 -container-port 9000
+root      5052  0.0  0.0  10680  4680 ?        Sl   19:15   0:00 containerd-shim -namespace moby -workdir /var/lib/containerd/io.containerd.runtime.v1.linux/moby/e7c454bc4b916d924c3ddb1f9e6c94242c4f8072203ef7bfdf8aa1234761c049 -address /run/containerd/containerd.sock -containerd-binary /usr/bin/containerd -runtime-root /var/run/docker/runtime-runc
+root      5292  0.0  0.0  16948   940 pts/1    S+   19:16   0:00 grep --color=auto docker
