@@ -1,0 +1,11 @@
+Activar sockect de docker
+
+nano /etc/systemd/system/docker.service.d/startup_options.conf
+
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// -H tcp://0.0.0.0:2376
+
+-- Recargar configuraciones
+systemctl daemon-reload
+systemctl restart docker

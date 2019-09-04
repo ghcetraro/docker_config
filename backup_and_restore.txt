@@ -1,0 +1,48 @@
+////////////
+
+docker export images
+
+docker save -o pepe.tar pepe01
+
+
+/////////////
+
+export en nube
+
+docker push <usuario>/>imagen>:<tag>
+
+docker push eltano84/ubuntu_16.04.9-nginx:1.0
+
+//////////
+
+docker import images
+
+docker load -i pepe.tar
+
+//////
+
+change name images
+
+docker tag e0c492ad0a16 mysql-server:5.5
+
+/////////////////////////////////////////////////
+
+export container
+
+docker export NAME | gzip > NAME.gz
+
+import container 
+
+zcat NAME.gz | docker import - NAME
+
+///////////////////
+
+Commit it with a new name
+
+//tiene que ser el id de la maquina corriendo -- convierte un contenedor en una imagen
+
+docker commit -m "What did you do to the image" -a "Author Name" container-id repository/new_image_name
+docker commit -m "blanco" -a "cetraro" ced801f17dd3 centos-base
+
+docker commit d7bdd3411d45 centos
+docker commit <hash tag of running container> new_image

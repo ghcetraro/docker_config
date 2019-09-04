@@ -1,0 +1,64 @@
+Docker allows you to quickly build, test and deploy applications as portable, self-sufficient containers that can virtually run everywhere.
+
+Docker doesn’t remove unused objects such as containers, images, volumes, and networks unless you explicitly tell it to do so. As you work with Docker, you can easily accumulate a large number of unused objects that consume significant disk space and clutter the output produced by the Docker commands.
+
+This guide serves as a “cheat sheet” to help Docker users keep their system organized and to free disk space by removing unused Docker containers, images, volumes, and networks.
+
+Removing All Unused Objects
+The docker system prune command will remove all stopped containers, all dangling images, and all unused networks:
+
+docker system prune
+Copy
+You’ll be prompted to continue, use the -f or --force flag to bypass the prompt.
+
+
+WARNING! This will remove:
+        - all stopped containers
+        - all networks not used by at least one container
+        - all dangling images
+        - all build cache
+Are you sure you want to continue? [y/N]
+Copy
+If you also want to remove all unused volumes, pass the --volumes flag:
+
+docker system prune --volumes
+Copy
+WARNING! This will remove:
+        - all stopped containers
+        - all networks not used by at least one container
+        - all volumes not used by at least one container
+        - all dangling images
+        - all build cache
+Are you sure you want to continue? [y/N] y
+Copy
+Removing Docker Containers
+Docker containers are not automatically removed when you stop them unless you start the container using the --rm flag.
+
+Remove one or more containers
+To remove one or more Docker images use the docker container rm command followed by the ID of the containers you want to remove.
+
+You can get a list of all active and inactive containers by passing the -a flag to the docker container ls command:
+
+docker container ls -a
+Copy
+The output should look something like this:
+
+CONTAINER ID        IMAGE                   COMMAND                  CREATED             STATUS                      PORTS               NAMES
+cc3f2ff51cab        centos                  "/bin/bash"              2 months ago        Created                                         competent_nightingale
+cd20b396a061        solita/ubuntu-systemd   "/bin/bash -c 'exec …"   2 months ago        Exited (137) 2 months ago                       systemd
+fb62432cf3c1        ubuntu                  "/bin/bash"              3 months ago        Exited (130) 3 months ago                       jolly_mirzakhani
+Copy
+Once you know the CONTAINER ID of the containers you want to delete, pass it to the docker container rm command. For example to remove the first two containers listed in the output above run:
+
+docker container rm cc3f2ff51cab cd20b396a061
+Copy
+If you get an error similar to the following, it means that the container is running. You’ll need to stop the container before removing it.
+
+
+
+//////////
+
+
+mv -f /var/lib/docker/* /data/tmp
+systemctl restart docker.service
+docker system prune -a

@@ -1,0 +1,27 @@
+You can add these options to the docker daemon as the default for all the containers it runs. 
+On the dockerd command line, the options are the same, --dns XX.XX.1.1 --dns-search companydomain. 
+To avoid changing the startup scripts to add that option, it's easier to setup an 
+
+/etc/docker/daemon.json 
+
+file with the following contents:
+
+{
+  "dns": ["XX.XX.1.1"],
+  "dns-search": ["companydomain"]
+}
+
+Then restart the docker daemon with systemctl restart docker to apply the change.
+
+You may find it better to update the 
+
+/etc/resolv.conf 
+
+in your VM to apply this change to not on the docker containers, but the VM itself. That would look like:
+
+nameserver XX.XX.1.1
+search companydomain
+
+If updating the resolv.conf, be sure that it's not managed by another tool, e.g. 
+if you are getting dhcp addresses for your VM this would be overwritten by the dhcp client daemon.
+

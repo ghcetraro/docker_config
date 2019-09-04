@@ -1,0 +1,7 @@
+Que docker respete el firewall ufw del equipo
+
+nano /etc/docker/daemon.json
+
+{
+"iptables": false
+}

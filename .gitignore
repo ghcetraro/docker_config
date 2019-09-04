@@ -1,0 +1,9 @@
+*~
+Dockerfile~
+dockerfile~
+*.md~
+*.txt~
+*.doc~
+*.odt~
+*.exe
+*.sh~
