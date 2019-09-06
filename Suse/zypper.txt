@@ -1,0 +1,898 @@
+zypper 
+
+Saltar a: navegación, buscar 
+Este artículo es acerca de como usar Zypper, el gestor de paquetes de software desde la línea de comandos, que utiliza la librería Libzypp. Contiene información que complementa la página de manual (con man zypper). Lo que no se encuentra aquí debería estar en la página de manual y viceversa.
+
+Referencia rápida
+Esto es lo que probablemente se use con más frecuencia. 
+zypper                 # para ver la ayuda general de opciones y comandos
+zypper help search     # para ver la ayuda del comando search
+zypper lp              # para ver los parches que están disponibles
+zypper patch           # para aplicar los parches
+zypper se sqlite       # para buscar sqlite
+zypper rm sqlite2      # para desinstalar sqlite2
+zypper in sqlite3      # para instalar sqlite3
+zypper in yast*        # para instalar todos los paquetes correspondientes a 'yast*'
+zypper up              # para actualizar todos los paquetes a la versión mas reciente posible
+Vademécum
+En estos archivos en PDF puede encontrar la información que aparece en esta página, pero comprimida en formato de una hoja de trucos (vademécum, chuleta, cheat sheet, etc). También incluye algunas referencias tomadas de las páginas de manual. Se recomienda su uso después de haber analizado la información mostrada en la página. 
+Página 1 en formato A4.
+Página 2 en formato A4.
+Uso general
+La sintaxis general de zypper es: 
+# zypper [opciones globales] comando [opciones del comando] [argumentos] ...
+Los componentes encerrados entre corchetes no son requeridos, así que la manera más simple de ejecutar zypper es escribiendo su nombre seguido de un comando. Por ejemplo, para aplicar los parches necesarios al sistema, se debe escribir: 
+# zypper patch
+Ademas, se puede elegir una o más opciones globales escribiéndolas antes del comando: (ejecuta el comando, pero no me preguntes nada) 
+# zypper --non-interactive patch
+Para usar las opciones especificas de un comando, se deben escribir luego de este: (aplica los parches necesarios pero no me preguntes para confirmar licencias, ya las leí) 
+# zypper patch --auto-agree-with-licenses
+Algunos de los comandos requieren uno o más argumentos: (instala o actualiza el paquete mplayer) 
+# zypper install mplayer
+Algunas de las opciones también requieren argumentos: (búsqueda de patrones) 
+# zypper search -t pattern
+Todas combinadas: (instala mplayer y amarok usando solo el repositorio factory, detallado) 
+# zypper -v install --repo factory mplayer amarok
+Indicaciones del usuario
+Cada vez que zypper necesite alguna entrada del usuario, las posibles respuestas aparecen entre corchetes seguido al texto. Para elegir la respuesta por defecto, que aparece en mayúscula (con la excepción de los caracteres no ASCII), solo hay que presionar <enter>. En ocasiones habrá disponible una ayuda para el usuario, en esos casos aparece como posible respuesta el símbolo '?'. Para hacer que zypper use la opción por defecto sin preguntar, se debe usar la opción global --non-interactive. 
+Vocabulario
+Repositorio: Directorio local o remoto que contiene paquetes e información acerca de estos (metadatos). Los repositorios anteriormente eran llamados fuentes de instalación , servicios o catálogos.
+Alias: Alias de repositorio es una versión corta del nombre del repositorio para uso en comandos y opciones como removerepo o --repo.
+Paquete: Son archivos RPM que contienen software y las instrucciones internas de cómo debe instalarlos el sistema, así como qué otros paquetes necesita para que estos funcionen (dependencias).
+Parche: Paquete o grupo de paquetes necesarios para instalar una actualización que generalmente repara un fallo.
+Patrón: Representa un grupo de paquetes para un propósito específico. Por ejemplo el patrón Servidor Http instalará todos los paquetes necesarios para poder configurar un servidor http.
+Producto: Representa la distribución (p. ej. 'openSUSE 12.2').
+Comandos
+Zypper provee numerosos comandos que pueden ser agrupados en las siguientes categorías: 
+Manejo de repositorios
+refresh, repos, addrepo, removerepo, modifyrepo, namerepo
+refresh-services, services, addservice, removeservice, modifyservice
+Manejo de paquetes
+install, remove, source-install
+Manejo de actualizaciones
+patch, list-patches, patch-check, patches, update, list-updates, dist-upgrade
+Consultas
+search, info, what-provides, list-updates, patch-check, patches, packages, patterns, products
+Bloqueo
+locks, addlock, removelock, cleanlocks
+Utilidades
+verify, install-new-recommends
+Otros
+help, licenses, versioncmp, targetos
+Visualizando la ayuda
+Es bueno saber cómo obtener ayuda. Para ver la ayuda general (lista de comandos y opciones globales), sólo se debe escribir zypper sin ninguna opción o argumento. Para ver la ayuda de un comando específico, se usa: 
+# zypper help [comando]
+o 
+# zypper [comando] --help
+Cabe destacar que también se puede usar -h en vez de --help. 
+Control de repositorios
+Se puede especificar un repositorio existente por su número en la lista producida por zypper lr, alias, o URI. Cuando se usa el número, se debe asegurar de verificar primero zypper lr, ya que el número puede cambiar luego de hacer cambios a los repositorios. 
+Listar los repositorios definidos
+repos o lr 
+Salida de ejemplo: 
+celebi:~ # zypper lr
+#  | Alias                           | Nombre                                         | Activado | Comprobación GPG | Refresco
+---+---------------------------------+------------------------------------------------+----------+------------------+---------
+ 1 | download.opensuse.org-non-oss   | Repositorio principal (NON-OSS)                | Sí       | (r ) Sí          | Sí      
+ 2 | download.opensuse.org-non-oss_1 | Repositorio de actualizaciones (No OpenSource) | Sí       | (r ) Sí          | Sí      
+ 3 | download.opensuse.org-oss       | Repositorio principal (OSS)                    | Sí       | (r ) Sí          | Sí      
+ 4 | download.opensuse.org-oss_1     | Repositorio Principal de Actualizaciones       | Sí       | (r ) Sí          | Sí      
+ 5 | openSUSE-42.1-0                 | openSUSE-42.1-0                                | Sí       | (r ) Sí          | Sí      
+ 6 | repo-debug                      | openSUSE-Leap-42.1-Debug                       | No       | ----             | Sí      
+ 7 | repo-debug-non-oss              | openSUSE-Leap-42.1-Debug-Non-Oss               | No       | ----             | Sí      
+ 8 | repo-debug-update               | openSUSE-Leap-42.1-Update-Debug                | No       | ----             | Sí      
+ 9 | repo-debug-update-non-oss       | openSUSE-Leap-42.1-Update-Debug-Non-Oss        | No       | ----             | Sí      
+10 | repo-source                     | openSUSE-Leap-42.1-Source                      | No       | ----             | Sí      
+11 | repo-update                     | openSUSE-Leap-42.1-Update                      | Sí       | ( p) Sí          | Sí  
+
+  celebi:~ # zypper lr 4 5
+Alias                              : download.opensuse.org-oss_1                       
+Nombre                             : Repositorio Principal de Actualizaciones          
+URI                                : http://download.opensuse.org/update/leap/42.1/oss 
+Activado                           : Sí                                                
+Comprobación GPG                   : (r ) Sí                                           
+Prioridad                          : 99                                                
+Actualización automática           : Activado                                          
+Conservar paquetes                 : Desactivado                                       
+Tipo                               : rpm-md                                            
+URI de clave GPG                   :                                                   
+Prefijo de la vía                  : /                                                 
+Servicio padre                     :                                                   
+Keywords                           :                                                   
+Vía de información del repositorio : /etc/zypp/repos.d/download.opensuse.org-oss_1.repo
+Vía del caché MD                   : /var/cache/zypp/raw/download.opensuse.org-oss_1   
+
+Alias                              : openSUSE-42.1-0                                              
+Nombre                             : openSUSE-42.1-0                                              
+URI                                : http://download.opensuse.org/distribution/leap/42.1/repo/oss/
+Activado                           : Sí                                                           
+Comprobación GPG                   : (r ) Sí                                                      
+Prioridad                          : 99                                                           
+Actualización automática           : Activado                                                     
+Conservar paquetes                 : Desactivado                                                  
+Tipo                               : yast2                                                        
+URI de clave GPG                   :                                                              
+Prefijo de la vía                  : /                                                            
+Servicio padre                     :                                                              
+Keywords                           :                                                              
+Vía de información del repositorio : /etc/zypp/repos.d/openSUSE-42.1-0.repo                       
+Vía del caché MD                   : /var/cache/zypp/raw/openSUSE-42.1-0 
+Otros ejemplos: 
+zypper lr -u       # para incluir la URI en la tabla
+zypper lr -d       # para incluir la prioridad, el tipo, la URI y el servicio en la tabla
+zypper lr -P       # para incluir la prioridad en la tabla
+Agregar repositorios
+addrepo o ar 
+Antes de que cualquier paquete pueda ser instalado se debe definir al menos un repositorio. Para agregar un repositorio, se usa el comando addrepo: 
+Salida de ejemplo: 
+celebi:~ # zypper ar  http://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_42.1/ repo-packman
+Añadiendo el repositorio repo-packman..................................................................[TERMINADO]
+El repositorio repo-packman se ha añadido correctamente
+Activado                 : Sí                                                                
+Actualización automática : No                                                                
+Comprobación GPG         : Sí                                                                
+Prioridad                : 99                                                                
+URI                      : http://ftp.gwdg.de/pub/linux/misc/packman/suse/openSUSE_Leap_42.1/
+
+Otros ejemplos: 
+zypper ar http://download.opensuse.org/repositories/security/openSUSE_Leap_42.1/security.repo  # mediante un archivo .repo
+zypper ar -c ftp://some.download.site alias   # probar el repositorio después de agregarlo
+zypper ar directorio/con/archivos/rpm local                # agregar un directorio local con archivos rpm
+Refrescar repositorios
+refresh o ref 
+Después de agregar un repositorio o cuando hace falta actualizar los datos de los paquetes que este incluye, necesita ser refrescado. Esto significa descargar los metadatos de los paquetes y procesar los datos en una caché para lectura rápida. 
+La primer vez que se refresca un repositorio se debe aceptar su clave GPG 
+celebi:~ # zypper refresh security
+Recuperando los metadatos del repositorio Security tools (openSUSE_Leap_42.1). --------------------------------------------------------[|]
+
+Se ha recibido una nueva clave de firma para el repositorio o paquete:
+
+  Repositorio:              Security tools (openSUSE_Leap_42.1)               
+  Nombre de la clave:       security OBS Project <security@build.opensuse.org>
+  Huella digital de clave:  AAF3EB04 4C49C402 A9E7B9AE 69D1B2AA EE3D166A      
+  Clave creada:             lun 26 may 2014 06:04:43 UYT                      
+  La clave caduca:          mié 03 ago 2016 06:04:42 UYT (expires in 18 days) 
+  Nombre de rpm:            gpg-pubkey-ee3d166a-538303ab                      
+
+
+¿Desea rechazar la clave, confiar en ella temporalmente o confiar en ella siempre? [r/t/a/? mostrar todas las opciones] (r): a
+Recuperando los metadatos del repositorio Security tools (openSUSE_Leap_42.1). ................................................[TERMINADO]
+Construyendo el caché del repositorio Security tools (openSUSE_Leap_42.1) .....................................................[TERMINADO]
+Los repositorios especificados han sido actualizados.
+Las veces siguientes no preguntara nada a no ser que cambie la clave GPG 
+celebi:~ # zypper refresh
+El repositorio Repositorio principal (NON-OSS) está actualizado.                                                                                                                                           
+El repositorio Repositorio de actualizaciones (No OpenSource) está actualizado.                                                                                                                            
+El repositorio Repositorio principal (OSS) está actualizado.                                                                                                                                               
+El repositorio Repositorio Principal de Actualizaciones está actualizado.                                                                                                                                  
+El repositorio openSUSE-42.1-0 está actualizado.                                                                                                                                                           
+El repositorio repo-packman está actualizado.                                                                                                                                                              
+Recuperando los metadatos del repositorio openSUSE-Leap-42.1-Update. ..........................................................[TERMINADO]
+Construyendo el caché del repositorio openSUSE-Leap-42.1-Update ...............................................................[TERMINADO]
+El repositorio Security tools (openSUSE_Leap_42.1) está actualizado.                                                                                                                                       
+Todos los repositorios han sido actualizados.
+Si la opción de autorefresh está habilitada para un repositorio, no hay que preocuparse por refrescarlo, se hace automáticamente cuando es necesario. Sin embargo, alguna gente prefiere refrescar sólo cuando lo desea (ej.: para evitar tener que esperar cuando solo quieren ver la salida del comando 'zypper info krusader'), así que deshabilitan el auto refrescado. 
+Otros ejemplos: 
+zypper ref packman security  # puede especificarse que repositorios refrescar
+zypper ref -f packman        # forzar el repositorio 'packman' para que se refresque
+Quitar repositorios
+removerepo o rr 
+celebi:~ # zypper rr repo-packman 10 foo
+No se ha encontrado el repositorio '10' por su alias, número o URI.
+No se ha encontrado el repositorio 'foo' por su alias, número o URI.
+Eliminado el repositorio 'packman' .......................................................[hecho]
+Se ha eliminado el repositorio 'packman'.
+Modificar repositorios
+modifyrepo o mr 
+Deshabilitar el repositorio número 6: 
+celebi:~ # zypper mr -d 6
+Se ha inhabilitado correctamente el repositorio 'repo-debug'.
+Habilitar el repositorio número 6: 
+celebi:~ # zypper mr -e 6
+Se ha habilitado correctamente el repositorio 'repo-debug'.
+Habilitar el auto refrescado y el cache de archivos rpm para el repositorio 'packman' y marcar su prioridad a 70: 
+celebi:~ # zypper mr -rk -p 70 packman
+La actualización automática se ha habilitado para el repositorio repo-packman.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-packman.
+La prioridad del repositorio repo-packman se ha definido como 70.
+Deshabilitar la caché de archivos RPM en todos los repositorios: 
+celebi:~ # zypper mr -Ka
+No hay cambios que realizar en el repositorio download.opensuse.org-non-oss.
+No hay cambios que realizar en el repositorio download.opensuse.org-non-oss_1.
+No hay cambios que realizar en el repositorio download.opensuse.org-oss.
+No hay cambios que realizar en el repositorio download.opensuse.org-oss_1.
+No hay cambios que realizar en el repositorio openSUSE-42.1-0.
+No hay cambios que realizar en el repositorio repo-debug.
+No hay cambios que realizar en el repositorio repo-debug-non-oss.
+No hay cambios que realizar en el repositorio repo-debug-update.
+No hay cambios que realizar en el repositorio repo-debug-update-non-oss.
+Se ha inhabilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-packman.
+No hay cambios que realizar en el repositorio repo-source.
+No hay cambios que realizar en el repositorio repo-update.
+No hay cambios que realizar en el repositorio security.
+Habilitar la caché de archivos RPM en todos los repositorios: 
+celebi:~ # zypper mr -ka
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio download.opensuse.org-non-oss.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio download.opensuse.org-non-oss_1.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio download.opensuse.org-oss.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio download.opensuse.org-oss_1.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio openSUSE-42.1-0.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-debug.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-debug-non-oss.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-debug-update.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-debug-update-non-oss.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-packman.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-source.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio repo-update.
+Se ha habilitado el almacenamiento en caché de los archivos RPM para el repositorio security.
+Renombrar repositorios
+renamerepo o nr 
+celebi:~ # zypper nr 13 repo-security
+Se ha cambiado el nombre del repositorio security a repo-security.
+Este comando actualmente sólo permite cambiar el alias del repositorio. Si se desea cambiar el Nombre se debe usar el comando mr. 
+Los alias deben mantenerse cortos y simples para facilitar el uso con la opción --repo. Usar alias es mas seguro que el número de los repositorios y más corto que las URI 
+Exportar/Importar repositorios
+repos --export o lr -e 
+Se puede exportar la lista completa de repositorios para luego usarlos en otras máquinas. 
+Para exportarlos se utiliza el comando: 
+celebi:~ # zypper lr --export /media/backups/repos/lista.repo
+Para importarlos se utiliza el comando: 
+celebi:~ # zypper ar /media/backups/repos/lista.repo
+Manejo de servicios
+Los servicios están un nivel por encima de los repositorios y sirven para manejar repositorios. Libzypp actualmente solo soporta un tipo de servicio, el Servicio de indice de repositorios (en ingles Repository Index Service) también conocido como RIS. 
+Agregar un Servicio
+addservice o as 
+Para agregar un servicio se utiliza el comando addservice 
+Ejemplo: 
+celebi:~ # zypper as -t RIS http://mewtwo.domain/ Mewtwo
+El servicio 'Mewtwo' se agregó correctamente.
+Refrescar un servicio
+refresh-services o refs 
+A continuación se debe refrescar el servicio para descargar los repositorios que provee: 
+celebi:~ # zypper refs
+Actualizando servicio 'Mewtwo'.
+Añadiendo el repositorio 'KDE:Extra' .......................................................[hecho]
+Añadiendo el repositorio 'repo-ati' ........................................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Debug' .............................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Update-Debug' ......................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Update-Debug-Non-Oss' ..............................[hecho]
+Añadiendo el repositorio 'repo-libdvdcss' ..................................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Oss' ...............................................[hecho]
+Añadiendo el repositorio 'packman' .........................................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Source' ............................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Update' ............................................[hecho]
+Añadiendo el repositorio 'openSUSE-12.2-Update-Non-Oss' ....................................[hecho]
+Añadiendo el repositorio 'security' ........................................................[hecho]
+Todos los servicios fueron actualizados.
+La primer vez que se refresca un servicio se debe habilitar los repositorios con el comando zypper mr -e -a 
+Eliminar servicios
+removeservice o rs 
+Un servicio se puede eliminar con el comando rs. 
+Ejemplo: 
+celebi:~ # zypper rs Mewtwo
+Eliminado servicio 'Mewtwo':
+Eliminado el repositorio 'KDE:Extra' .......................................................[hecho]
+Eliminado el repositorio 'repo-ati' ........................................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Debug' .............................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Update-Debug' ......................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Update-Debug-Non-Oss' ..............................[hecho]
+Eliminado el repositorio 'repo-libdvdcss' ..................................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Oss' ...............................................[hecho]
+Eliminado el repositorio 'packman' .........................................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Source' ............................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Update' ............................................[hecho]
+Eliminado el repositorio 'openSUSE-12.2-Update-Non-Oss' ....................................[hecho]
+Eliminado el repositorio 'security' ........................................................[hecho]
+Se eliminó el servicio 'Mewtwo'.
+Manejo de paquetes
+Seleccionar paquetes
+Hay varias maneras de elegir un paquete para instalarlo o desinstalarlo. 
+por su capacidad
+zypper in eclipse
+zypper in qt
+por su capacidad y/o arquitectura y/o versión
+zypper in 'zypper<0.12.10'
+zypper in zypper.i586=0.12.11 
+por su nombre exacto de paquete (--name)
+zypper in -n ftp
+por su nombre exacto de paquete y repositorio (implica --name)
+zypper in factory:zypper
+por nombre de paquete usando comodines
+zypper in yast*ftp*
+especificando un archivo .rpm para instalar (puede ser la URL al archivo rpm)
+Instalar paquetes
+install o in 
+Los paquetes se pueden instalar por nombre... 
+celebi:~ # zypper install nginx
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+Resolviendo dependencias de paquete...
+
+The following 11 NEW packages are going to be installed:
+  gd GeoIP GeoIP-data libGeoIP1 libjbig2 libjpeg8 libtiff5 libvpx1 libXpm4 libxslt1 nginx
+
+The following recommended package was automatically selected:
+  GeoIP
+
+11 new packages to install.
+Tamaño total de descarga: 2,1 MiB. Ya en caché: 0 B. Después de la operación, se utilizarán 6,6 MiB adicionales.
+¿Desea continuar? [s/n/? mostrar todas las opciones] (s): s
+Recuperando package GeoIP-data-1.6.6-1.1.noarch                                               (1/11), 309,0 KiB (740,3 KiB desempaquetado)
+Recuperando: GeoIP-data-1.6.6-1.1.noarch.rpm .....................................................................[TERMINADO (60,4 KiB/s)]
+Recuperando package libXpm4-3.5.11-5.1.x86_64                                                 (2/11),  33,3 KiB ( 71,2 KiB desempaquetado)
+Recuperando: libXpm4-3.5.11-5.1.x86_64.rpm .......................................................................[TERMINADO (58,4 KiB/s)]
+Recuperando package libjbig2-2.0-3.2.x86_64                                                   (3/11),  28,2 KiB ( 67,2 KiB desempaquetado)
+Recuperando: libjbig2-2.0-3.2.x86_64.rpm ......................................................................................[TERMINADO]
+Recuperando package libjpeg8-8.0.2-31.3.x86_64                                                (4/11), 102,1 KiB (274,0 KiB desempaquetado)
+Recuperando: libjpeg8-8.0.2-31.3.x86_64.rpm ...................................................................................[TERMINADO]
+Recuperando package libvpx1-1.3.0-3.2.x86_64                                                  (5/11), 554,8 KiB (  1,6 MiB desempaquetado)
+Recuperando: libvpx1-1.3.0-3.2.x86_64.rpm ........................................................................[TERMINADO (78,6 KiB/s)]
+Recuperando package libxslt1-1.1.28-8.1.x86_64                                                (6/11), 128,0 KiB (336,3 KiB desempaquetado)
+Recuperando: libxslt1-1.1.28-8.1.x86_64.rpm ...................................................................................[TERMINADO]
+Recuperando package libGeoIP1-1.6.6-1.1.x86_64                                                (7/11),  94,9 KiB (262,1 KiB desempaquetado)
+Recuperando: libGeoIP1-1.6.6-1.1.x86_64.rpm ...................................................................................[TERMINADO]
+Recuperando package GeoIP-1.6.6-1.1.x86_64                                                    (8/11),  41,4 KiB ( 97,9 KiB desempaquetado)
+Recuperando: GeoIP-1.6.6-1.1.x86_64.rpm .......................................................................................[TERMINADO]
+Recuperando package libtiff5-4.0.6-3.1.x86_64                                                 (9/11), 152,0 KiB (479,8 KiB desempaquetado)
+Recuperando: libtiff5-4.0.6-3.1.x86_64.rpm ......................................................................[TERMINADO (152,6 KiB/s)]
+Recuperando package gd-2.1.0-8.2.x86_64                                                      (10/11), 174,4 KiB (970,8 KiB desempaquetado)
+Recuperando: gd-2.1.0-8.2.x86_64.rpm ..........................................................................................[TERMINADO]
+Recuperando package nginx-1.8.1-5.1.x86_64                                                   (11/11), 525,9 KiB (  1,8 MiB desempaquetado)
+Recuperando: nginx-1.8.1-5.1.x86_64.rpm .......................................................................................[TERMINADO]
+Buscando conflictos de archivos: ..............................................................................................[TERMINADO]
+( 1/11) Instalando: GeoIP-data-1.6.6-1.1.noarch ...............................................................................[TERMINADO]
+( 2/11) Instalando: libXpm4-3.5.11-5.1.x86_64 .................................................................................[TERMINADO]
+( 3/11) Instalando: libjbig2-2.0-3.2.x86_64 ...................................................................................[TERMINADO]
+( 4/11) Instalando: libjpeg8-8.0.2-31.3.x86_64 ................................................................................[TERMINADO]
+( 5/11) Instalando: libvpx1-1.3.0-3.2.x86_64 ..................................................................................[TERMINADO]
+( 6/11) Instalando: libxslt1-1.1.28-8.1.x86_64 ................................................................................[TERMINADO]
+( 7/11) Instalando: libGeoIP1-1.6.6-1.1.x86_64 ................................................................................[TERMINADO]
+( 8/11) Instalando: GeoIP-1.6.6-1.1.x86_64 ....................................................................................[TERMINADO]
+( 9/11) Instalando: libtiff5-4.0.6-3.1.x86_64 .................................................................................[TERMINADO]
+(10/11) Instalando: gd-2.1.0-8.2.x86_64 .......................................................................................[TERMINADO]
+(11/11) Instalando: nginx-1.8.1-5.1.x86_64 ....................................................................................[TERMINADO]
+...o las capacidades que proveen: 
+celebi:~ # zypper in MozillaFirefox \< 16
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+MozillaFirefox < 16 ya está instalado.
+No hay actualización para MozillaFirefox-15.0-2.7.1.x86_64. La última versión disponible ya se encuentra instalada.
+Resolviendo dependencias...
+No hay nada que hacer.
+celebi:~ # zypper in MozillaFirefox \>= 15
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+MozillaFirefox >= 15 ya está instalado.
+No hay actualización para MozillaFirefox-15.0-2.7.1.x86_64. La última versión disponible ya se encuentra instalada.
+Resolviendo dependencias...
+No hay nada que hacer.
+celebi:~ # zypper in 'libqtiff.so()(64bit)'
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+libqtiff.so()(64bit) no se encontró en como nombre de paquete, probando en características.
+El paquete 'libqt4-x11' que proporciona 'libqtiff.so()(64bit)' ya está instalado.
+Resolviendo dependencias...
+No hay nada que hacer.
+Otros ejemplos: 
+zypper in yast*                     # instala todos los módulos de YaST2
+zypper in -t pattern lamp_server    # instala el patrón lamp_server (paquetes necesarios para un servidor LAMP)
+zypper in emacs pattern:lamp_server # instala el paquete emacs y el patrón lamp_server
+zypper in vim -emacs                # instala vim y desinstala emacs
+zypper in amarok packman:libxine1   # instala libxine1 desde packman y amarok de cualquier repositorio
+zypper in bitchx-1.1-81.x86_64.rpm  # instala bitchx desde el rpm en un directorio local
+zypper in -f subversion             # fuerza la reinstalacion de subversion
+Desinstalar paquetes
+remove o rm 
+El comando remove es como el comando install, solo que su efecto es el contrario 
+celebi:~ # zypper rm nginx
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+Resolviendo dependencias de paquete...
+
+The following package is going to be REMOVED:
+  nginx
+
+1 package to remove.
+Después de la operación, se liberarán 1,8 MiB.
+¿Desea continuar? [s/n/? mostrar todas las opciones] (s): n
+El comando remove tambien cuenta con la opción --clean-deps o -u, la cual a la vez de eliminar los paquetes seleccionados eliminará las dependencias de estos que no sean necesarias en el sistema. 
+celebi:~ # zypper rm --clean-deps nginx
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+Resolviendo dependencias de paquete...
+
+The following 11 packages are going to be REMOVED:
+  gd GeoIP GeoIP-data libGeoIP1 libjbig2 libjpeg8 libtiff5 libvpx1 libXpm4 libxslt1 nginx
+
+11 packages to remove.
+Después de la operación, se liberarán 6,6 MiB.
+¿Desea continuar? [s/n/? mostrar todas las opciones] (s): n
+Paquetes fuente y construcción de dependencias
+source-install o si 
+# zypper si zypper
+Leyendo los paquetes instalados...
+Cargando datos del repositorio...
+Resolviendo dependencias de paquete...
+
+The following 65 NEW packages are going to be installed:
+  augeas-devel boost-devel cmake cpp cpp48 gcc gcc48 gcc48-c++ gcc-c++ gettext-tools glibc-devel libasan0 libatomic1 libboost_atomic1_54_0 libboost_chrono1_54_0 libboost_date_time1_54_0
+  libboost_filesystem1_54_0 libboost_graph1_54_0 libboost_graph_parallel1_54_0 libboost_iostreams1_54_0 libboost_locale1_54_0 libboost_log1_54_0 libboost_math1_54_0 libboost_mpi1_54_0
+  libboost_program_options1_54_0 libboost_python1_54_0 libboost_random1_54_0 libboost_regex1_54_0 libboost_serialization1_54_0 libboost_signals1_54_0 libboost_test1_54_0 libboost_timer1_54_0
+  libboost_wave1_54_0 libcloog-isl4 libcurl-devel libgomp1 libibverbs1 libicu52_1 libicu52_1-data libisl10 libitm1 libmpc3 libmpfr4 libopenssl-devel libsolv-devel libstdc++48-devel libstdc++-devel
+  libtsan0 libudev-devel libxml2-devel libzypp-devel linux-glibc-devel make ncurses-devel openmpi-libs patch popt-devel readline-devel rpm-build rpm-devel site-config systemd-rpm-macros tack xz-devel
+  zlib-devel
+
+The following source package is going to be installed:
+  zypper
+
+The following recommended package was automatically selected:
+  rpm-build
+
+65 new packages to install, 1 source package.
+Tamaño total de descarga: 62,7 MiB. Ya en caché: 0 B. Después de la operación, se utilizarán 300,6 MiB adicionales.
+¿Desea continuar? [s/n/? mostrar todas las opciones] (s):
+También se pueden instalar solo las dependencias o solo el paquete de fuentes: 
+zypper si -D zypper    # solo el paquete fuente (sin dependencias para compilar)
+zypper si -d zypper    # solo las dependencias para compilar (sin paquete fuente)
+Actualizar paquetes
+update o up 
+El siguiente comando actualiza un paquete a su versión más reciente disponible. Ver también Manejo de actualizaciones para más información. 
+zypper up                           # actualiza todos los paquetes instalados con la versión más reciente disponible
+zypper up libzypp zypper            # actualiza libzypp y zypper
+zypper in sqlite3                   # actualiza sqlite3 o lo instala si aún no fue instalado
+Consultas
+Buscar paquetes
+search o se 
+Por defecto, el comando search busca paquetes de cualquier tipo, estado o repositorio, cuyos nombres contienen la cadena de caracteres especificada y sin distinguir mayúsculas de minúsculas: 
+celebi:~ # zypper se sqlite
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+
+S | Nombre                                | Resumen                                                                | Tipo      
+--+---------------------------------------+------------------------------------------------------------------------+-----------
+  | bogofilter-sqlite3                    | Bogofilter sqlite3 backend                                             | package   
+  | calligra-kexi-sqlite3-driver          | Database Application - SQLite3 driver                                  | package   
+  | courier-authlib-sqlite                | SQLite support for the Courier authentication library                  | package   
+  | dovecot22-backend-sqlite              | SQLite support for Dovecot                                             | package   
+  | freeradius-server-sqlite              | SQLite support for freeradius                                          | package   
+  | freeswitch-event-cdr-sqlite           | SQLite CDR Logger                                                      | package   
+  | freeswitch-event-cdr-sqlite-debuginfo | Debug information for package freeswitch-event-cdr-sqlite              | package   
+  | gnunet-sqlite                         | SQLite Storage Backend for gnunet                                      | package   
+  | gnunet-sqlite-debuginfo               | Debug information for package gnunet-sqlite                            | package   
+  | libQt5Sql5-sqlite                     | Qt 5 sqlite plugin                                                     | package   
+  | libQt5Sql5-sqlite-32bit               | Qt 5 sqlite plugin                                                     | package   
+  | libapr-util1-dbd-sqlite3              | DBD driver for SQLite 3                                                | package   
+  | libcppdb_sqlite3-0                    | SQLite3 database connector for the cppdb library                       | package   
+  | libdbi-drivers-dbd-sqlite             | SQLite2 driver for libdbi                                              | package   
+  | libdbi-drivers-dbd-sqlite3            | SQLite3 driver for libdbi                                              | package   
+  | libgda-5_0-sqlite                     | Proveedor Sqlite para GNU Data Access (GDA)                            | package   
+  | libqt4-sql-sqlite                     | Qt 4 sqlite plugin                                                     | package   
+  | libqt4-sql-sqlite-32bit               | Qt 4 sqlite plugin                                                     | package   
+i | libsqlite3-0                          | Bibliotecas compartidas para el motor de bases de datos SQL empotrable | package   
+  | libsqlite3-0-32bit                    | Bibliotecas compartidas para el motor de bases de datos SQL empotrable | package   
+  | libvsqlitepp3                         | Well designed C++ sqlite 3.x wrapper library                           | package   
+  | mediatomb-sqlite                      | UPnP AV MediaServer sqlite                                             | package   
+  | mediatomb-sqlite-debuginfo            | Debug information for package mediatomb-sqlite                         | package   
+  | monitoring-plugins-dbi-sqlite3        | Check SQlite3 database using DBI                                       | package   
+  | mono-data-sqlite                      | Database connectivity for Mono                                         | package   
+  | pdns-backend-sqlite3                  | SQLite 3 backend for pdns                                              | package   
+  | perl-DBD-SQLite                       | Self-contained RDBMS in a DBI Driver                                   | package   
+  | perl-DateTime-Format-SQLite           | Parse and format SQLite dates and times                                | package   
+  | php5-sqlite                           | PHP5 Extension Module                                                  | package   
+  | proftpd-sqlite                        | SQLite Module for ProFTPD                                              | package   
+  | python-pysqlite                       | DB-API 2.0 interface for SQLite 3.x                                    | package   
+  | python-pysqlite                       | DB-API 2.0 interface for SQLite 3.x                                    | srcpackage
+  | python-pysqlite-debuginfo             | Debug information for package python-pysqlite                          | package   
+  | python-pysqlite-debugsource           | Debug sources for package python-pysqlite                              | package   
+  | qore-sqlite3-module                   | Sqlite3 DBI module for Qore                                            | package   
+  | qore-sqlite3-module-doc               | Documentation and examples for the Qore sqlute3 module                 | package   
+  | qt3-sqlite                            | Complemento de base de datos SQLite para Qt                            | package   
+  | ruby2.1-rubygem-sqlite3               | This module allows Ruby programs to interface with the SQLite3         | package   
+  | ruby2.1-rubygem-sqlite3-doc           | RDoc documentation for sqlite3                                         | package   
+  | ruby2.1-rubygem-sqlite3-testsuite     | Test suite for sqlite3                                                 | package   
+  | sqlite2                               | Motor de bases de datos SQL empotrable                                 | package   
+  | sqlite2-32bit                         | Motor de bases de datos SQL empotrable                                 | package   
+  | sqlite2-devel                         | Motor de bases de datos SQL empotrable                                 | package   
+  | sqlite3                               | Motor de bases de datos SQL empotrable                                 | package   
+  | sqlite3-devel                         | Motor de bases de datos SQL empotrable                                 | package   
+  | sqlite3-doc                           | Documentation for sqlite3                                              | package   
+  | sqlitebrowser                         | Create, design and edit SQLite Databases                               | package   
+  | sqliteman                             | Lightweigth but powerful Sqlite3 manager                               | package   
+  | sqliteodbc                            | ODBC driver for SQLite                                                 | package   
+  | sqliteodbc-doc                        | Documentation for sqliteodbc                                           | package   
+  | strongswan-sqlite                     | OpenSource IPsec-based VPN Solution                                    | package   
+  | tntdb-sqlite                          | SQLite plugin for tntdb                                                | package   
+  | tntdb4-sqlite                         | Tntdb is a c++-class-library for easy database-access - sqlite         | package   
+  | tntdb4-sqlite-debuginfo               | Debug information for package tntdb4-sqlite                            | package   
+  | ulogd-sqlite3                         | SQLite3 output target for ulogd                                        | package   
+  | vsqlite++-devel                       | Development files for vsqlite++                                        | package   
+  | vsqlite++-doc                         | Development documentation for vsqlite++                                | package
+La letra "i" en la primer columna indica que el paquete ya esta instalado en el sistema. Para ver todas las versiones de los paquetes se usa la opción "--details/-s": 
+celebi:~ # zypper search -s --match-exact wget
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+
+S | Nombre | Tipo    | Versión  | Arquitectura | Repositorio                
+--+--------+---------+----------+--------------+----------------------------
+i | wget   | package | 1.14-2.2 | x86_64       | Repositorio principal (OSS)
+i | wget   | package | 1.14-2.2 | x86_64       | openSUSE-42.1-0    
+La letra "v" en la primer columna indica que hay otra versión disponible diferente a la instalada en el sistema. 
+Otros ejemplos: 
+zypper se -dC --match-words RSI   # busca por acrónimos RSI (distingue mayúsculas de minúsculas), también en sumarios y descripciones
+zypper se 'yast*'                 # muestra todos los paquetes que comienzan con 'yast' (OJO con la expansión del shell, ¡usar comillas en caso de duda!)
+zypper se -r packman              # muestra todos los paquetes del repositorio 'packman'
+zypper se -i sqlite               # muestra todos los paquetes instalados que contienen 'sqlite' en su nombre
+zypper se -t pattern -r repo-oss  # muestra todos los patrones disponibles en el repositorio 'repo-oss'
+zypper se -t product              # muestra todos los productos disponibles
+Obtener información acerca de un paquete
+info o if 
+celebi:~ # zypper info amarok
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+
+
+Información para package amarok:
+--------------------------------
+Repositorio: repo-packman
+Nombre: amarok
+Versión: 2.8.0-36.2
+Arquitectura: x86_64
+Proveedor:http://packman.links2linux.de
+Instalado: No
+Estado: no se ha instalado
+Tamaño de instalación: 18,0 MiB
+Resumen:Reproductor de medios para KDE
+Descripción: 
+  Amarok is a media player for all kinds of media. This includes MP3, Ogg
+  Vorbis, audio CDs, podcasts and streams. Play lists can be stored in
+  .m3u or .pls files.
+Este comando muestra información detallada del paquete 'amarok'. 
+Otros ejemplos: 
+zypper info -t patch MozillaFirefox    # muestra información del parche 'MozillaFirefox'
+zypper patch-info MozillaFirefox       # igual que arriba
+zypper info -t pattern lamp_server     # muestra información del patrón 'lamp_server'
+zypper info -t product openSUSE-FTP    # muestra información de producto especificado
+Que paquete provee cierto ejecutable o archivo
+Previamente se usaba el comando what-provides o wp, pero en versiones recientes de zypper ha sido reemplazado por search --provides --match-exact. 
+Este comando es similar a rpm -q --whatprovides wget, pero rpm es sólo capaz de consultar la base de datos de RPM (base de datos de paquetes instalados). zypper, por otro lado, revisará en los repositorios los paquetes no instalados ademas de los instalados. 
+celebi:~ # zypper search --provides --match-exact yast2
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+
+S | Nombre | Resumen                  | Tipo   
+--+--------+--------------------------+--------
+i | yast2  | YaST2: paquete principal | package
+Otras consultas
+Los comandos patches, packages, patterns y products son similares a search -s -t [patch,package,pattern,product], excepto que muestran alguna información adicional especifica al tipo del paquete. Por ejemplo patches muestra también el estado del parche (Needed/Security/Not Applicable). 
+Los comandos list-updates y patch-check se ven en Manejo de actualizaciones. 
+Bloqueo de paquetes
+locks o ll addlock o al removelock o rl cleanlocks o cl 
+El bloqueo de paquetes sirve para prevenir cambios en los paquetes del sistema. Los paquetes bloqueados no pueden cambiar su estado, si esta instalado no se puede desinstalar o actualizar, si no esta instalado no se puede instalar. 
+Para bloquear todos los paquetes que comienzan con 'PackageKit': 
+celebi:~ # zypper al 'PackageKit*'
+El bloqueo se ha añadido correctamente.
+Una vez mas, cuidado con las expansiones del shell, ante la duda usar comillas si hay posibilidad de que packagekit* coincida con algún archivo o directorio en el directorio de trabajo. 
+Para ver los bloqueos activos: 
+celebi:~ # zypper ll
+#  | Nombre                              | Tipo    | Repositorio 
+---+-------------------------------------+---------+-------------
+1  | apper                               | package | (cualquiera)
+2  | PackageKit                          | package | (cualquiera)
+3  | PackageKit-backend-zypp             | package | (cualquiera)
+4  | PackageKit-branding-basedonopensuse | package | (cualquiera)
+5  | PackageKit-branding-openSUSE        | package | (cualquiera)
+6  | PackageKit-branding-upstream        | package | (cualquiera)
+7  | PackageKit-browser-plugin           | package | (cualquiera)
+8  | PackageKit-devel                    | package | (cualquiera)
+9  | PackageKit-gstreamer-plugin         | package | (cualquiera)
+10 | PackageKit-gtk3-module              | package | (cualquiera)
+11 | PackageKit-lang                     | package | (cualquiera)
+12 | gnome-packagekit                    | package | (cualquiera)
+13 | gnome-packagekit-extras             | package | (cualquiera)
+14 | gnome-packagekit-lang               | package | (cualquiera)
+15 | libpackagekit-glib2-14              | package | (cualquiera)
+16 | libpackagekit-glib2-14-32bit        | package | (cualquiera)
+17 | libpackagekit-glib2-devel           | package | (cualquiera)
+18 | libpackagekit-glib2-devel-32bit     | package | (cualquiera)
+19 | libpackagekit-qt2-2                 | package | (cualquiera)
+20 | libpackagekit-qt2-2-32bit           | package | (cualquiera)
+21 | libpackagekit-qt2-devel             | package | (cualquiera)
+22 | libpackagekit-qt2-devel-32bit       | package | (cualquiera)
+23 | typelib-1_0-PackageKitGlib-1_0      | package | (cualquiera)
+24 | typelib-1_0-PackageKitPlugin-1_0    | package | (cualquiera)
+Para quitar un bloqueo: 
+celebi:~ # zypper rl PackageKit-browser-plugin
+Se ha eliminado el bloqueo especificado.
+1 bloqueo fue eliminado satisfactoriamente.
+Otros ejemplos: 
+zypper al zypper                   # bloquea el paquete 'zypper'
+zypper al -r repo-oss virtualbox*  # restringe el bloqueo al repositorio 'repo-oss' (permitiendo instalaciones desde otros)
+zypper rl 3                        # quita el bloqueo 3
+Utilidades
+Verificar dependencias
+verify o ve 
+Ocasionalmente se puede terminar con un sistema roto en lo que respecta a dependencias de paquetes. Si alguna aplicación falla al iniciar con algún mensaje que indique la falta de algún paquete, esto se puede reparar con zypper: 
+celebi:~ # rpm -e --nodeps mozilla-xulrunner190 && firefox
+Could not find compatible GRE between versión 1.9.0 and 1.9.0.
+celebi:~ # zypper ve
+Reading installed packages...
+Some of the dependencies of installed packages are broken. In order to fix these dependencies, the following actions need to be taken:
+
+The following NEW package is going to be installed:
+  mozilla-xulrunner190
+
+
+Overall download size: 6.5 M. After the operation, additional 23.5 M will be used.
+Continue? [YES/no]: y
+Instalar paquetes nuevos recomendados
+install-new-recommends o inr 
+Este comando instala paquetes recomendados recientemente agregados para paquetes que estén instalados en el sistema. Esto provee una manera fácil de instalar nuevos lenguajes para el software o controladores para hardware recién agregado. 
+celebi:~ # zypper inr
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+Resolviendo dependencias...
+
+Los siguientes paquetes NUEVOS van a ser instalados:
+
+  kdebase4-openSUSE-lang bundle-lang-common-cs
+
+2 nuevos paquetes a instalar.
+Tamaño total a descargar: 534,0 KiB. Después de la operación se utilizarán 1,9 MiB adicionales.
+¿Desea continuar? [s/n/?] (s):
+Control de procesos
+ps 
+Este comando muestra los procesos que están usando archivos que han sido borrados por una actualización o desinstalación reciente. 
+Hay algunos programas en ejecución que utilizan archivos eliminados producto de una reciente actualización. Debería considerar reiniciar algunos. Ejecute 'zypper ps' para listarlos
+celebi:~ # zypper ps
+Los siguientes procesos en ejecución utilizan archivos eliminados:
+
+PID   | PPID  | UID  | Inicio de sesión | Comando                      | Servicio | Archivos                                           
+------+-------+------+------------------+------------------------------+----------+----------------------------------------------------
+555   | 1     | 0    | root             | cupsd                        | cups     | /lib64/libkeyutils.so.1.4                          
+608   | 1     | 102  | messagebus       | dbus-daemon                  |          | /usr/lib64/libcap-ng.so.0.0.0                      
+659   | 1     | 0    | root             | sssd                         | sssd     | /lib64/libkeyutils.so.1.4                          
+723   | 659   | 0    | root             | sssd_be                      |          | /lib64/libkeyutils.so.1.4                          
+1688  | 1     | 0    | root             | sshd                         | sshd     | /lib64/libkeyutils.so.1.4                          
+7551  | 1688  | 0    | root             | sshd                         | sshd     | /lib64/libkeyutils.so.1.4                          
+7558  | 7551  | 1000 | vampird          | sshd                         | sshd     | /lib64/libkeyutils.so.1.4                          
+16084 | 1     | 1000 | vampird          | dbus-daemon                  |          | /usr/lib64/libcap-ng.so.0.0.0  
+
+Es probable que quiera reiniciar estos procesos.
+Vea 'man zypper' para información relacionada a los valores en la tabla superior
+Manejo de actualizaciones
+Hay dos enfoques para mantener su sistema al día. Uno de ellos es mediante paquetes, el otro es mediante parches. 
+El enfoque mediante parches es especialmente útil para la gente que esté usando publicaciones estables y quiere actualizar su sistema con parches publicados en el repositorio de actualizaciones en línea. Los repositorios de actualizaciones se añaden por defecto durante la instalación o actualización del sistema, o también se pueden añadir por medio de Configuración de la actualización en línea en la pestaña Software del Centro de control YaST, o de forma manual utilizando zypper. Aquí puede ver la lista de repositorios de actualización disponibles para openSUSE. 
+La función equivalente de esta característica en YaST es el módulo Actualización en línea. 
+El segundo enfoque, actualización mediante paquetes, está descrito en la sección Actualizar paquetes y servidores para actualizaciones generales de paquetes desde cualquier repositorio con sus versiones más nuevas. 
+Listando parches necesarios
+list-patches o lp 
+Para ver todos los parches necesarios: 
+celebi:~ # zypper lp
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+
+Repositorio          | Nombre            | Versión | Categoría   | Estado    | Resumen                                                    
+---------------------+-------------------+---------+-------------+-----------+------------------------------------------------------------
+openSUSE-12.2-Update | openSUSE-2012-626 | 1       | recommended | necesario | Firefox: Update to 15.0.1                                  
+openSUSE-12.2-Update | openSUSE-2012-629 | 1       | security    | necesario | security update for dhcp                                   
+openSUSE-12.2-Update | openSUSE-2012-631 | 1       | recommended | necesario | grub2, pm-utils: fix grub2 menu shown after suspend to disk
+openSUSE-12.2-Update | openSUSE-2012-633 | 1       | recommended | necesario | libnfnetlink: Update to new git snapshot 1.0.0+git35       
+openSUSE-12.2-Update | openSUSE-2012-635 | 1       | recommended | necesario | xdg-utils: Fix generic su                                  
+openSUSE-12.2-Update | openSUSE-2012-637 | 1       | recommended | necesario | snapper: fixed logging during program termination  
+A veces, cuando hay una actualización que afecta al manejador de paquetes, se muestra sola, ya que debe aplicarse primero. Una vez aplicada el comando mostrará el resto de las actualizaciones. 
+Aplicando parches
+patch 
+Para aplicar los parches necesarios: 
+celebi:~ # zypper patch
+Loading repository data...
+Reading installed packages...
+Resolving package dependencies...
+
+The following NEW patch is going to be installed:
+  openSUSE-2012-615 
+
+The following packages are going to be upgraded:
+  bind-libs bind-utils 
+
+2 packages to upgrade.
+Overall download size: 1.1 MiB. After the operation, additional 2.8 KiB will be used.
+Continue? [y/n/?] (y): y
+Retrieving package bind-libs-9.9.1P3-1.4.1.x86_64                                           (1/2), 879.9 KiB (  3.1 MiB unpacked)
+Retrieving: bind-libs-9.9.1P3-1.4.1.x86_64.rpm ..............................................................[done (403.8 KiB/s)]
+Retrieving package bind-utils-9.9.1P3-1.4.1.x86_64                                          (2/2), 205.1 KiB (666.0 KiB unpacked)
+Retrieving: bind-utils-9.9.1P3-1.4.1.x86_64.rpm ...........................................................................[done]
+Installing: bind-libs-9.9.1P3-1.4.1 .......................................................................................[done]
+Installing: bind-utils-9.9.1P3-1.4.1 ......................................................................................[done]
+Listado de parches
+patches 
+El comando list-updates solo muestra los parches necesarios. Para ver todos los parches disponibles: 
+celebi:~ # zypper patches
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+Repositorio                                    | Nombre            | Categoría   | Gravedad  | Estado         
+-----------------------------------------------+-------------------+-------------+-----------+----------------
+Repositorio Principal de Actualizaciones       | 4641              | recommended | moderate  | No es necesario
+openSUSE-Leap-42.1-Update                      | 4641              | recommended | moderate  | No es necesario
+Repositorio Principal de Actualizaciones       | 4723              | security    | moderate  | No es necesario
+openSUSE-Leap-42.1-Update                      | 4723              | security    | moderate  | No es necesario
+Repositorio Principal de Actualizaciones       | 4789              | security    | important | No es necesario
+openSUSE-Leap-42.1-Update                      | 4789              | security    | important | No es necesario
+Repositorio Principal de Actualizaciones       | 4813              | security    | moderate  | No es necesario
+openSUSE-Leap-42.1-Update                      | 4813              | security    | moderate  | No es necesario
+Repositorio Principal de Actualizaciones       | 4886              | recommended | low       | instalado      
+openSUSE-Leap-42.1-Update                      | 4886              | recommended | low       | instalado      
+Repositorio Principal de Actualizaciones       | 4893              | recommended | moderate  | No es necesario
+openSUSE-Leap-42.1-Update                      | 4893              | recommended | moderate  | No es necesario
+Repositorio Principal de Actualizaciones       | 4922              | recommended | low       | instalado      
+openSUSE-Leap-42.1-Update                      | 4922              | recommended | low       | instalado      
+Repositorio Principal de Actualizaciones       | 4965              | security    | important | No es necesario
+openSUSE-Leap-42.1-Update                      | 4965              | security    | important | No es necesario
+...
+Verificando parches
+patch-check 
+Este comando mostrará la cantidad de parches disponibles para el sistema: 
+celebi:~ # zypper pchk
+Obteniendo los datos del repositorio...
+Leyendo los paquetes instalados...
+0 parches necesarios (0 parches de seguridad)
+Obtener información de parches
+patch-info
+info -t patch 
+celebi:~ # zypper info -t patch 4886
+Cargando datos del repositorio...
+Leyendo los paquetes instalados...
+
+
+Información para patch 4886:
+----------------------------
+Nombre: 4886
+Versión: 1
+Arquitectura: noarch
+Proveedor:maint-coord@suse.de
+Estado: instalado
+Categoría: recommended
+Gravedad: low
+Fecha de creación: jue 24 mar 2016 12:49:17 UYT
+Rearranque necesario: No
+Es necesario reiniciar el gestor de paquetes: No
+Interactivo: No
+Resumen:Recommended update for timezone
+Descripción: 
+  This update provides the latest timezone information (2016c) for your
+  system, including the following changes:
+  
+  - Azerbaijan no longer observes DST (Asia/Baku)
+  - Chile reverts from permanent to seasonal DST
+  
+  This release also includes changes affecting past time stamps and documentation.
+  For a comprehensive list, please refer to the release announcement from ICANN:
+  
+  http://mm.icann.org/pipermail/tz-announce/2016-March/000037.html
+      
+  This update was imported from the SUSE:SLE-12:Update update project.
+Proporciona:
+  patch:4886 == 1
+En conflicto:
+  timezone-java.noarch < 2016c-0.11.1
+  srcpackage:timezone-java < 2016c-0.11.1
+  timezone.i586 < 2016c-0.11.1
+  srcpackage:timezone < 2016c-0.11.1
+  timezone-debuginfo.i586 < 2016c-0.11.1
+  timezone-debugsource.i586 < 2016c-0.11.1
+  timezone.x86_64 < 2016c-0.11.1
+  timezone-debuginfo.x86_64 < 2016c-0.11.1
+  timezone-debugsource.x86_64 < 2016c-0.11.1
+Actualización de paquetes
+list-updates o lu
+update o up 
+Para actualizar los paquetes con la versión nueva disponible: 
+celebi:~ # zypper up
+Se puede obtener una lista de actualizaciones con: 
+celebi:~ # zypper lu
+Los comandos de arriba mostrarán o actualizarán solo los paquetes que no tengan problemas de dependencias. Para obtener una lista completa de los paquetes para los que exista una versión nueva: 
+celebi:~ # zypper lu -a
+Esto mostrará una lista de todos los candidatos, sean o no instalables, requieran o no interacción con el usuario para resolver problemas de dependencias. 
+Actualización de la distribución
+dist-upgrade o dup 
+Este comando utiliza el algoritmo de actualización de distribución, el cual maneja paquetes rotos, discontinuados, etc. Se usa para cambiar a otra versión de la distribución. 
+celebi:~ # zypper dup
+Se recomienda habilitar solo los repositorios principales de la versión mas unos pocos importantes que se usen (y aún mejor - la versión correspondiente al repositorio principal) durante la actualización. También se puede especificar el repositorio a usar mediante la opcion --repo: zypper dup -r repo1 -r repo2 .... 
+P: ¿Es cierto que "zypper up" solo actualiza paquetes cuando la versión nueva está en el mismo repositorio y "zypper dup" actualiza todo, sin importar en que repositorio esté el paquete nuevo? 
+R: "zypper up" actualiza los paquetes si una versión nueva está disponible pero no cambia de "distribuidor" (Nota: El Build Service entero tiene el mismo distribuidor). "zypper dup" tratará de sincronizar los paquetes actualmente instalados con una disponible de cualquier repositorio habilitado. Esto significa que también desactualizará paquetes instalados si no hay versión más nueva o igual. 
+ 
+Uso de zypper en aplicaciones y scripts
+Zypper soporta numerosas opciones globales las cuales lo hacen adecuado para su uso dentro de procesos automáticos como por ejemplo scripts. También, varios códigos de salida diferentes están listados en la página de manual que pueden ser revisados para el uso de zypper en procesos automáticos. 
+
+Modo no interactivo
+--non-interactive 
+En este modo zypper no preguntara nada al usuario y usará respuestas por defecto. Cuando se usa esta opción se garantiza que zypper no se quedará esperando una respuesta en el dispositivo de entrada estándar (stdin) o en un bucle infinito. 
+Por ejemplo, para actualizar el sistema automáticamente sin confirmación se usa: 
+celebi:~ # zypper --non-interactive update
+Este comando no requiere confirmación del usuario para proseguir con la actualización, salta los paquetes o parches que sean interactivos y necesiten alguna confirmación adicional y responde automáticamente cualquier otra consulta. 
+Modo sin chequeo GPG
+--no-gpg-checks 
+Si esta opción es usada, zypper siempre elegirá continuar si algún control GPG falla, ej. un archivo de repositorio no esta firmado y debería estarlo, el archivo esta firmado y el control falla, etc. 
+
+Auto-aceptar licencias
+--auto-agree-with-licenses 
+Esta opción es para los comandos install, remove y update. Usándola, el usuario declara que leyó y aceptó los términos de licencias del software que el comando instalará, y zypper automáticamente contestara 'Sí' a la confirmación de la licencia. Esto es útil para quienes instalan el mismo conjunto de paquetes en varios equipos mediante algún proceso automático y ya han leído todas las licencias. 
+Silenciar salida
+--quiet 
+Evita que se muestre texto como barras de progreso o información, solo muestra los resultados de las operaciones y errores. 
+
+Salida XML
+--xmlout 
+Esta opción hace que zypper hable en XML. Esto permite a scripts y otro tipo de aplicaciones procesar la salida de zypper en un estándar bien definido. El esquema RNC de la salida XML de zypper esta disponible aquí y en /usr/share/zypper/xml/xmlout.rnc. 
+No toda (pero sí la mayoría) de la salida está actualmente en XML; el objetivo es tener toda la salida posible en XML. 
+Indicaciones
+La siguiente debería ser una lista completa de los casos donde zypper interacción con el usuario junto con las respuestas utilizadas en el modo no interactivo. Todas las opciones adicionales mencionadas acá tienen prioridad sobre --non-interactive, así que, si se usan, las respuestas que implican se usan automáticamente aunque no se indique --non-interactive. 
+
+Indicaciones respecto a GPG
+Donde no se use --no-gpg-checks, un mensaje o una advertencia son mostradas en la salida de error estándar (stderr) y en el archivo de registro (log). 
+prompt 
+default answer 
+with --no-gpgp-checks 
+note 
+accept unsigned file? 
+N 
+Y 
+
+accept new key (reject the key, trust temporarily, or trust always? [r/t/a]) 
+R 
+R 
+a new key can be trusted or imported in the interactive mode only 
+accept unknown key? 
+N 
+Y 
+
+verification of signed file failed, continue? 
+N 
+Y 
+
+no digest for a file, continue? 
+N 
+Y 
+
+accept unknown digest? 
+N 
+Y 
+
+Otras indicaciones
+prompt 
+default answer 
+other answer 
+note 
+proceed with installation/removal/update? 
+Y 
+
+in addition, the --no-confirm option can be used with the install/remove/update commands even without the global --non-interactive 
+confirm 3rd party license 
+N 
+Y if --auto-agree-with-licenses is used 
+in addition, for zypper update, --skip-interactive option can be used to exclude interactive patches from to-be-installed list (a heritage of rug) 
+confirm a patch message 
+Y 
+
+
+problem while installing/removing a resolvable, Abort/Retry/Ignore? 
+ABORT 
+
+this is ugly and can be improved in future 
+problem while downloading a package, Abort/Retry/Ignore? 
+ABORT 
+
+this is also ugly, can be enhanced somehow in the future 
+dependency conflict, #/s/r/c (solution number, skip, retry, or cancel) 
+c 
+
+always cancel, user interaction is needed to resolve dependencies 
+media change request 
+ABORT 
+
+
+remove problematic lock? 
+Y 
+
+
+Compatibilidad con rug
+La sintaxis de zypper es similar a la de rug, aunque sus órdenes y opciones han comenzado a divergir, como sucede también con la información de salida y su comportamiento. Sin embargo, zypper es capaz de trabajar en un modo compatible con rug (usando la opción global -r o --rug-compatible) y admite la mayoría de las órdenes de rug. Para obtener más detalles vea man zypper, sección COMPATIBILITY WITH RUG. 
