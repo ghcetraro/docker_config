@@ -1,0 +1,40 @@
+-- rpm 
+rpm –httpproxy http://127.0.0.1:3128/ –import https://jenkins-ci.org/redhat/jenkins-ci.org.key
+
+--wget
+/etc/wgetrc or for the user only with the ~/.wgetrc file:
+
+use_proxy=yes
+http_proxy=127.0.0.1:8080
+https_proxy=127.0.0.1:8080
+
+wget ... -e use_proxy=yes -e http_proxy=127.0.0.1:8080 ...
+
+
+--curl
+export http_proxy=http://foo:bar@202.54.1.1:3128/
+export https_proxy=$http_proxy
+
+## Use the curl command ##
+curl -I https://www.cyberciti.biz
+curl -v -I https://www.cyberciti.biz
+
+How to use the specified proxy server with curl on Unix
+$ curl -x http://prox_server_vpn:3128/ -I https://www.cyberciti.biz/faq/howto-nginx-customizing-404-403-error-page/
+How to use socks protocol?
+The syntax is same:
+curl -x socks5://[user:password@]proxyhost[:port]/ url
+curl --socks5 192.168.1.254:3099 https://www.cyberciti.biz/
+How do I configure and setup curl to permanently use a proxy connection?
+Update/edit your ~/.curlrc file using a text editor such as vim:
+$ vi ~/.curlrc
+
+Append the following:
+proxy = server1.cyberciti.biz:3128
+proxy-user = "foo:bar"
+Save and close the file. Another option is create a bash shell alias in your ~/.bashrc file:
+## alias for curl command 
+## set proxy-server and port, the syntax is
+## alias curl="curl -x {your_proxy_host}:{proxy_port}"
+alias curl="curl -x server1.cyberciti.biz:3128"
+
