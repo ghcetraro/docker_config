@@ -1,0 +1,47 @@
+SUSE Linux Enterprise : How to setup a Proxy manually
+
+Environment
+SUSE Linux Enterprise Server 10
+SUSE Linux Enterprise Server 11
+SUSE Linux Enterprise Server 12
+SUSE Linux Enterprise Server 15 
+Situation
+Setting up a proxy through YaST may not be preferred in some environments, so a manual method may be used.
+Resolution
+Each account will need either its own proxy environment variables or a global proxy can be setup. 
+If the environment requires a 'per-user' setup, then the proxy configuration will need to be achieved by creating a .bashrc file in the home folder to accommodate setting for the following environment variables. 
+Otherwise 'system-wide' variables can be configured by editing the global /etc/sysconfig/proxy file
+Global proxy configuration
+The global configuration file should look like the example below (please adjust TCP/IP addresses and Port numbers to match the environment)
+
+Please edit /etc/sysconfig/proxy with the following proxy values
+
+PROXY_ENABLED="yes"
+HTTP_PROXY="http://192.168.0.1:3128"
+HTTPS_PROXY="http://192.168.0.1:3128"
+FTP_PROXY="http://192.168.0.1:3128"
+NO_PROXY="localhost, 127.0.0.1"
+Single user proxy configuration
+When it is desired or required to set a proxy configuration for a single user, please create a .bashrc file under the users home directory, and add the following export commands :
+
+export http_proxy="http://192.168.0.1"
+export ftp_proxy="http://192.168.0.1"
+export https_proxy="http://192.168.0.1"
+export no_proxy="localhost, 127.0.0.1"
+
+Providing credentials to the proxy
+If the proxy requires credentials to login you will need to create the following file:
+/root/.curlrc
+Let us assume the user is named 'john, then the following will need to be created 
+/home/john/.curlrc
+The following permissions need to be set to his file :
+-rw-r--r-- 1 user:group 16:18 .curlrc
+The file should also follow the format below where john is the user and n0v3ll is the password :
+
+# Created proxy file on 09/14/2010
+proxy-user = "john:n0v3ll"
+Note: For the setting to take effect immediately you will need to either log out and back in or export the proxy variables via the terminal session.
+Additional Information
+Applications that support it, such as YaST2 Online Update, use them immediately. Other applications use them after a new login (lynx, wget). 
+Some applications do not support these settings at all – they use their own settings system. 
+
