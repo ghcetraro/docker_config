@@ -1,0 +1,23 @@
+-- Error and fixed
+
+docker login 192.168.0.23:5000
+
+-- display
+
+Error saving credentials: error storing credentials - err: exit status 1, out: `Cannot autolaunch D-Bus without X11 $DISPLAY`
+
+-- install fixed
+
+sudo apt install gnupg2 pass
+
+-- aplicar cambios
+
+sudo systemctl daemon-reload ; sudo systemctl restart docker.service
+
+-- login 
+
+docker login 192.168.0.23:5000
+
+-- verificar que se haya guardado bien la clave
+
+cat /root/.docker/config.json
