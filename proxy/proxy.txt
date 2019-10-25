@@ -9,7 +9,7 @@ cotenido
 //////////////////////
 
 [Service]
-Environment="HTTP_PROXY=http://10.40.1.27:3128/"
+Environment="HTTP_PROXY=http://10.40.1.27:3128/" "NO_PROXY=localhost, 127.0.0.1, 172.0.0.0/8, 123.0.0.0/8, 192.0.0.0/8, 10.0.0.0/8, *.domain.local"
 
 ///////////////////
 
